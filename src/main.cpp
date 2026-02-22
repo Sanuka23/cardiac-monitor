@@ -1,32 +1,51 @@
 /*
- * ESP32 + MAX30100 Heart Rate & SpO2 Monitor
+ * ESP32 Heart Rate, SpO2 & ECG Monitor
  *
  * Board: ESP32 CP2102 Type-C DevKit (30-pin)
- * Sensor: MAX30100 Pulse Oximeter
+ * Sensors:
+ *   - MAX30100 Pulse Oximeter (HR + SpO2 via I2C)
+ *   - AD8232 ECG Monitor (analog output + lead-off detection)
  *
- * Wiring:
- *   MAX30100 VIN  -> ESP32 3V3
- *   MAX30100 GND  -> ESP32 GND
- *   MAX30100 SDA  -> ESP32 GPIO21
- *   MAX30100 SCL  -> ESP32 GPIO22
- *   MAX30100 INT  -> ESP32 GPIO19
+ * MAX30100 Wiring:
+ *   VIN  -> ESP32 3V3
+ *   GND  -> ESP32 GND
+ *   SDA  -> ESP32 GPIO21
+ *   SCL  -> ESP32 GPIO22
+ *   INT  -> ESP32 GPIO19
+ *
+ * AD8232 Wiring:
+ *   3.3V   -> ESP32 3V3
+ *   GND    -> ESP32 GND
+ *   OUTPUT -> ESP32 GPIO34 (ADC1_CH6)
+ *   LO+    -> ESP32 GPIO32
+ *   LO-    -> ESP32 GPIO33
+ *
+ * Output Modes (toggle via serial):
+ *   Send 't' -> Text mode (human-readable, default)
+ *   Send 'p' -> Plotter mode (Arduino Serial Plotter CSV)
  */
 
 #include <Arduino.h>
 #include <Wire.h>
 #include "MAX30100_PulseOximeter.h"
 
-// --- Configuration ---
+
+// --- MAX30100 Configuration ---
 #define REPORTING_PERIOD_MS   1000
 #define MAX_INIT_RETRIES      5
 #define INIT_RETRY_DELAY_MS   1000
 #define IR_LED_CURRENT        MAX30100_LED_CURR_7_6MA
 #define BEAT_LED_PIN          2  // Onboard LED
-
-// Stall detection: if no new beat for this many ms, reinitialize sensor
 #define STALL_TIMEOUT_MS      10000
 
-// --- Globals ---
+// --- AD8232 ECG Configuration ---
+#define ECG_OUTPUT_PIN        34    // Analog output (ADC1_CH6, input-only)
+#define ECG_LO_PLUS_PIN       32    // Lead-off detection (+)
+#define ECG_LO_MINUS_PIN      33    // Lead-off detection (-)
+#define ECG_SAMPLE_PERIOD_MS  10    // 100Hz ECG sampling
+#define ECG_TEXT_DIVISOR       10    // Text mode: print every 10th sample (10Hz)
+
+// --- MAX30100 Globals ---
 PulseOximeter pox;
 uint32_t tsLastReport = 0;
 uint32_t beatCount = 0;
@@ -34,31 +53,43 @@ uint32_t lastBeatCount = 0;
 uint32_t tsLastBeatChange = 0;
 bool sensorOk = true;
 
+// --- ECG & Output Mode Globals ---
+uint32_t tsLastEcgSample = 0;
+uint8_t ecgTextCounter = 0;
+bool ecgLeadOff = false;
+int lastEcgValue = 0;
+bool plotterMode = false;
+float lastReportedHR = 0.0;
+uint8_t lastReportedSpO2 = 0;
+
 // --- Callbacks ---
 void onBeatDetected() {
     beatCount++;
     digitalWrite(BEAT_LED_PIN, HIGH);
-    Serial.print("[BEAT] #");
-    Serial.println(beatCount);
+    if (!plotterMode) {
+        Serial.print("[BEAT] #");
+        Serial.println(beatCount);
+    }
 }
 
 // --- Sensor Init ---
 bool initializeSensor() {
     for (int attempt = 1; attempt <= MAX_INIT_RETRIES; attempt++) {
-        Serial.print("[INIT] Attempt ");
-        Serial.print(attempt);
-        Serial.print(" of ");
-        Serial.print(MAX_INIT_RETRIES);
-        Serial.println("...");
+        if (!plotterMode) {
+            Serial.print("[INIT] Attempt ");
+            Serial.print(attempt);
+            Serial.print(" of ");
+            Serial.print(MAX_INIT_RETRIES);
+            Serial.println("...");
+        }
 
-        // Reset I2C bus before each attempt
         Wire.end();
         delay(50);
         Wire.begin(21, 22);
         Wire.setClock(100000);
 
         if (pox.begin()) {
-            Serial.println("[INIT] MAX30100 initialized successfully.");
+            if (!plotterMode) Serial.println("[INIT] MAX30100 initialized successfully.");
             pox.setIRLedCurrent(IR_LED_CURRENT);
             pox.setOnBeatDetectedCallback(onBeatDetected);
             tsLastBeatChange = millis();
@@ -67,16 +98,34 @@ bool initializeSensor() {
             return true;
         }
 
-        Serial.println("[INIT] FAILED. Check wiring and I2C pull-ups.");
+        if (!plotterMode) Serial.println("[INIT] FAILED. Check wiring and I2C pull-ups.");
 
         if (attempt < MAX_INIT_RETRIES) {
-            Serial.print("[INIT] Retrying in ");
-            Serial.print(INIT_RETRY_DELAY_MS / 1000);
-            Serial.println(" second(s)...");
+            if (!plotterMode) {
+                Serial.print("[INIT] Retrying in ");
+                Serial.print(INIT_RETRY_DELAY_MS / 1000);
+                Serial.println(" second(s)...");
+            }
             delay(INIT_RETRY_DELAY_MS);
         }
     }
     return false;
+}
+
+// --- Serial Command Handler ---
+void checkSerialCommands() {
+    if (Serial.available()) {
+        char cmd = Serial.read();
+        if (cmd == 'p' || cmd == 'P') {
+            plotterMode = true;
+        } else if (cmd == 't' || cmd == 'T') {
+            plotterMode = false;
+            Serial.println();
+            Serial.println("[MODE] Switched to TEXT mode.");
+            Serial.println("Send 'p' for Plotter mode.");
+        }
+        while (Serial.available()) Serial.read();
+    }
 }
 
 // --- Setup ---
@@ -86,16 +135,22 @@ void setup() {
 
     Serial.println();
     Serial.println("============================================");
-    Serial.println("  ESP32 + MAX30100 Heart Rate / SpO2 Monitor");
+    Serial.println("  ESP32 Heart Monitor (MAX30100 + AD8232)");
     Serial.println("============================================");
     Serial.println();
 
     pinMode(BEAT_LED_PIN, OUTPUT);
     digitalWrite(BEAT_LED_PIN, LOW);
 
-    // Initialize I2C at lower speed to work around MAX30100 pull-up issue
+    // Initialize AD8232 ECG pins
+    pinMode(ECG_LO_PLUS_PIN, INPUT);
+    pinMode(ECG_LO_MINUS_PIN, INPUT);
+    analogSetPinAttenuation(ECG_OUTPUT_PIN, ADC_11db);  // Full 0-3.3V range
+    analogReadResolution(12);  // 12-bit (0-4095)
+
+    // Initialize I2C at lower speed for MAX30100 pull-up workaround
     Wire.begin(21, 22);
-    Wire.setClock(100000);  // 100kHz (default 400kHz causes errors with 1.8V pull-ups)
+    Wire.setClock(100000);
 
     if (!initializeSensor()) {
         Serial.println();
@@ -110,7 +165,6 @@ void setup() {
         Serial.println();
         Serial.println("System halted. Reset ESP32 to retry.");
 
-        // Blink LED rapidly to indicate error
         while (true) {
             digitalWrite(BEAT_LED_PIN, HIGH);
             delay(100);
@@ -119,17 +173,48 @@ void setup() {
         }
     }
 
+    Serial.println("[ECG]  AD8232 ready on GPIO34.");
     Serial.println();
-    Serial.println("Place your finger on the sensor. Keep steady.");
-    Serial.println("Readings every 1 second.");
+    Serial.println("Place finger on MAX30100. Attach ECG electrodes.");
+    Serial.println("Send 'p' for Serial Plotter mode, 't' for text mode.");
     Serial.println("--------------------------------------------");
     Serial.println();
 }
 
 // --- Main Loop ---
 void loop() {
-    // CRITICAL: Must call as frequently as possible - no delays here
+    // CRITICAL: Must call as frequently as possible
     pox.update();
+
+    // --- ECG Sampling (100Hz) ---
+    if (millis() - tsLastEcgSample >= ECG_SAMPLE_PERIOD_MS) {
+        ecgLeadOff = (digitalRead(ECG_LO_PLUS_PIN) == HIGH)
+                  || (digitalRead(ECG_LO_MINUS_PIN) == HIGH);
+
+        lastEcgValue = ecgLeadOff ? 0 : analogRead(ECG_OUTPUT_PIN);
+
+        if (plotterMode) {
+            Serial.print("ECG:");
+            Serial.print(lastEcgValue);
+            Serial.print(",HR:");
+            Serial.print((int)lastReportedHR);
+            Serial.print(",SpO2:");
+            Serial.println(lastReportedSpO2);
+        } else {
+            if (++ecgTextCounter >= ECG_TEXT_DIVISOR) {
+                ecgTextCounter = 0;
+                if (ecgLeadOff) {
+                    Serial.println("[ECG] Leads OFF - reattach electrodes!");
+                } else {
+                    Serial.print("[ECG] ");
+                    Serial.print(lastEcgValue);
+                    Serial.println(" | Leads: OK");
+                }
+            }
+        }
+
+        tsLastEcgSample = millis();
+    }
 
     // Non-blocking LED off after beat blink
     static uint32_t ledOnTime = 0;
@@ -148,43 +233,53 @@ void loop() {
         tsLastBeatChange = millis();
     }
 
-    // Auto-recover if sensor stalls (no beats for STALL_TIMEOUT_MS while finger likely on)
+    // Auto-recover if sensor stalls
     if (sensorOk && (millis() - tsLastBeatChange > STALL_TIMEOUT_MS) && beatCount > 0) {
-        Serial.println();
-        Serial.println("[WARN] Sensor stalled. Reinitializing...");
+        if (!plotterMode) {
+            Serial.println();
+            Serial.println("[WARN] Sensor stalled. Reinitializing...");
+        }
         sensorOk = false;
 
         if (initializeSensor()) {
-            Serial.println("[WARN] Recovery successful.");
+            if (!plotterMode) Serial.println("[WARN] Recovery successful.");
         } else {
-            Serial.println("[WARN] Recovery failed. Will retry in 10s...");
-            tsLastBeatChange = millis();  // Reset timer to retry later
-            sensorOk = true;  // Allow retry loop to continue
+            if (!plotterMode) Serial.println("[WARN] Recovery failed. Will retry in 10s...");
+            tsLastBeatChange = millis();
+            sensorOk = true;
         }
     }
 
-    // Report readings periodically
+    // Report HR/SpO2 periodically
     if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
         float heartRate = pox.getHeartRate();
         uint8_t spo2 = pox.getSpO2();
 
-        Serial.print("HR: ");
-        if (heartRate < 1.0) {
-            Serial.print("--.-");
-        } else {
-            Serial.print(heartRate, 1);
-        }
+        lastReportedHR = heartRate;
+        lastReportedSpO2 = spo2;
 
-        Serial.print(" bpm  |  SpO2: ");
-        if (spo2 == 0) {
-            Serial.print("---");
-        } else {
-            Serial.print(spo2);
-        }
+        if (!plotterMode) {
+            Serial.print("HR: ");
+            if (heartRate < 1.0) {
+                Serial.print("--.-");
+            } else {
+                Serial.print(heartRate, 1);
+            }
 
-        Serial.print("%  |  Beats: ");
-        Serial.println(beatCount);
+            Serial.print(" bpm  |  SpO2: ");
+            if (spo2 == 0) {
+                Serial.print("---");
+            } else {
+                Serial.print(spo2);
+            }
+
+            Serial.print("%  |  Beats: ");
+            Serial.println(beatCount);
+        }
 
         tsLastReport = millis();
     }
+
+    // Check for mode switching commands
+    checkSerialCommands();
 }
