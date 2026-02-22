@@ -1,5 +1,5 @@
 /*
- * ESP32 Heart Rate, SpO2 & ECG Monitor
+ * ESP32 Cardiac Monitor - Phase 3
  *
  * Board: ESP32 CP2102 Type-C DevKit (30-pin)
  * Sensors:
@@ -20,266 +20,212 @@
  *   LO+    -> ESP32 GPIO32
  *   LO-    -> ESP32 GPIO33
  *
- * Output Modes (toggle via serial):
- *   Send 't' -> Text mode (human-readable, default)
- *   Send 'p' -> Plotter mode (Arduino Serial Plotter CSV)
+ * Modes:
+ *   WIFI_MODE_ENABLED=1 -> WiFi operational (POST to API every 10s)
+ *   WIFI_MODE_ENABLED=0 -> Serial debug only
+ *
+ * Serial commands:
+ *   't' / 'T' -> Text mode (human-readable, default)
+ *   'p' / 'P' -> Plotter mode (Arduino Serial Plotter CSV)
  */
 
 #include <Arduino.h>
-#include <Wire.h>
-#include "MAX30100_PulseOximeter.h"
+#include "config.h"
+#include "sensor_manager.h"
+#include "wifi_manager.h"
+#include "data_sender.h"
 
+// --- Output mode ---
+static bool plotterMode = false;
 
-// --- MAX30100 Configuration ---
-#define REPORTING_PERIOD_MS   1000
-#define MAX_INIT_RETRIES      5
-#define INIT_RETRY_DELAY_MS   1000
-#define IR_LED_CURRENT        MAX30100_LED_CURR_7_6MA
-#define BEAT_LED_PIN          2  // Onboard LED
-#define STALL_TIMEOUT_MS      10000
-
-// --- AD8232 ECG Configuration ---
-#define ECG_OUTPUT_PIN        34    // Analog output (ADC1_CH6, input-only)
-#define ECG_LO_PLUS_PIN       32    // Lead-off detection (+)
-#define ECG_LO_MINUS_PIN      33    // Lead-off detection (-)
-#define ECG_SAMPLE_PERIOD_MS  10    // 100Hz ECG sampling
-#define ECG_TEXT_DIVISOR       10    // Text mode: print every 10th sample (10Hz)
-
-// --- MAX30100 Globals ---
-PulseOximeter pox;
-uint32_t tsLastReport = 0;
-uint32_t beatCount = 0;
-uint32_t lastBeatCount = 0;
-uint32_t tsLastBeatChange = 0;
-bool sensorOk = true;
-
-// --- ECG & Output Mode Globals ---
-uint32_t tsLastEcgSample = 0;
-uint8_t ecgTextCounter = 0;
-bool ecgLeadOff = false;
-int lastEcgValue = 0;
-bool plotterMode = false;
-float lastReportedHR = 0.0;
-uint8_t lastReportedSpO2 = 0;
-
-// --- Callbacks ---
-void onBeatDetected() {
-    beatCount++;
-    digitalWrite(BEAT_LED_PIN, HIGH);
-    if (!plotterMode) {
-        Serial.print("[BEAT] #");
-        Serial.println(beatCount);
-    }
-}
-
-// --- Sensor Init ---
-bool initializeSensor() {
-    for (int attempt = 1; attempt <= MAX_INIT_RETRIES; attempt++) {
-        if (!plotterMode) {
-            Serial.print("[INIT] Attempt ");
-            Serial.print(attempt);
-            Serial.print(" of ");
-            Serial.print(MAX_INIT_RETRIES);
-            Serial.println("...");
-        }
-
-        Wire.end();
-        delay(50);
-        Wire.begin(21, 22);
-        Wire.setClock(100000);
-
-        if (pox.begin()) {
-            if (!plotterMode) Serial.println("[INIT] MAX30100 initialized successfully.");
-            pox.setIRLedCurrent(IR_LED_CURRENT);
-            pox.setOnBeatDetectedCallback(onBeatDetected);
-            tsLastBeatChange = millis();
-            lastBeatCount = beatCount;
-            sensorOk = true;
-            return true;
-        }
-
-        if (!plotterMode) Serial.println("[INIT] FAILED. Check wiring and I2C pull-ups.");
-
-        if (attempt < MAX_INIT_RETRIES) {
-            if (!plotterMode) {
-                Serial.print("[INIT] Retrying in ");
-                Serial.print(INIT_RETRY_DELAY_MS / 1000);
-                Serial.println(" second(s)...");
-            }
-            delay(INIT_RETRY_DELAY_MS);
-        }
-    }
-    return false;
-}
-
-// --- Serial Command Handler ---
-void checkSerialCommands() {
+// --- Serial command handler ---
+static void checkSerialCommands() {
     if (Serial.available()) {
         char cmd = Serial.read();
         if (cmd == 'p' || cmd == 'P') {
             plotterMode = true;
         } else if (cmd == 't' || cmd == 'T') {
             plotterMode = false;
-            Serial.println();
-            Serial.println("[MODE] Switched to TEXT mode.");
-            Serial.println("Send 'p' for Plotter mode.");
+            Serial.println("\n[MODE] Text mode. Send 'p' for Plotter.");
         }
         while (Serial.available()) Serial.read();
     }
 }
 
-// --- Setup ---
+// --- Serial output ---
+static void serialOutputPlotter() {
+    Serial.printf("ECG:%d,HR:%d,SpO2:%d\n",
+        sensorGetLastEcgValue(),
+        (int)sensorGetHeartRate(),
+        sensorGetSpO2());
+}
+
+static void serialOutputText() {
+    if (sensorShouldPrintEcgText()) {
+        if (sensorIsEcgLeadOff()) {
+            Serial.println("[ECG] Leads OFF - reattach electrodes!");
+        } else {
+            Serial.printf("[ECG] %d | Leads: OK\n", sensorGetLastEcgValue());
+        }
+    }
+}
+
+static uint32_t _lastVitalReport = 0;
+static void serialReportVitals() {
+    if (millis() - _lastVitalReport < HR_REPORT_PERIOD_MS) return;
+    _lastVitalReport = millis();
+
+    if (plotterMode) return;
+
+    float hr = sensorGetHeartRate();
+    uint8_t spo2 = sensorGetSpO2();
+
+    if (hr < 1.0) {
+        Serial.print("HR: --.-");
+    } else {
+        Serial.printf("HR: %.1f", hr);
+    }
+
+    if (spo2 == 0) {
+        Serial.print(" bpm  |  SpO2: ---%");
+    } else {
+        Serial.printf(" bpm  |  SpO2: %d%%", spo2);
+    }
+
+    Serial.printf("  |  Beats: %lu\n", sensorGetBeatCount());
+}
+
+// --- WiFi status display ---
+static void printWifiStatus() {
+    static WifiState lastPrintedState = WIFI_STATE_DISCONNECTED;
+    WifiState current = wifiGetState();
+    if (current != lastPrintedState) {
+        lastPrintedState = current;
+        const char* names[] = {
+            "DISCONNECTED", "CONNECTING", "CONNECTED", "NTP_SYNCING", "READY"
+        };
+        Serial.printf("[WIFI] State: %s\n", names[current]);
+    }
+}
+
+// --- Handle completed 10s data window ---
+static void handleDataWindow() {
+    if (!sensorIsWindowReady()) return;
+
+    SensorWindow window;
+    if (!sensorGetWindow(window)) return;
+
+#if !WIFI_MODE_ENABLED
+    // Serial-debug mode: just log the window summary
+    Serial.printf("[WINDOW] %u samples, %u beats, HR=%.1f, SpO2=%u, LeadOff=%d\n",
+        window.ecgSampleCount, window.beatCount,
+        window.heartRateBpm, window.spo2Percent, window.ecgLeadOff);
+    return;
+#else
+    if (!wifiIsReady()) {
+        Serial.println("[WINDOW] WiFi not ready, data discarded.");
+        return;
+    }
+
+    time_t timestamp = wifiGetTimestamp();
+    if (timestamp == 0) {
+        Serial.println("[WINDOW] NTP not synced, data discarded.");
+        return;
+    }
+
+    PredictionResult prediction;
+
+    for (int attempt = 0; attempt <= API_MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+            Serial.printf("[WINDOW] Retry %d/%d...\n", attempt, API_MAX_RETRIES);
+            delay(500);
+        }
+
+        SendResult result = dataSenderPost(window, wifiGetDeviceId(), timestamp, prediction);
+
+        if (result == SEND_OK) {
+            if (prediction.valid && !plotterMode) {
+                Serial.printf("[RISK] %s (score=%.3f, confidence=%.3f)\n",
+                    prediction.riskLabel, prediction.riskScore, prediction.confidence);
+            }
+            return;
+        }
+
+        if (result == SEND_JSON_ERROR || result == SEND_NOT_READY) {
+            return;
+        }
+    }
+
+    Serial.printf("[WINDOW] POST failed. Stats: %lu OK, %lu FAIL\n",
+        dataSenderGetSuccessCount(), dataSenderGetFailCount());
+#endif
+}
+
+// ============================================================
+//  SETUP
+// ============================================================
 void setup() {
     Serial.begin(115200);
     delay(500);
 
     Serial.println();
     Serial.println("============================================");
-    Serial.println("  ESP32 Heart Monitor (MAX30100 + AD8232)");
+    Serial.println("  ESP32 Cardiac Monitor - Phase 3");
     Serial.println("============================================");
+    Serial.printf("  Mode: %s\n", WIFI_MODE_ENABLED ? "WiFi" : "Serial Debug");
     Serial.println();
 
-    pinMode(BEAT_LED_PIN, OUTPUT);
-    digitalWrite(BEAT_LED_PIN, LOW);
-
-    // Initialize AD8232 ECG pins
-    pinMode(ECG_LO_PLUS_PIN, INPUT);
-    pinMode(ECG_LO_MINUS_PIN, INPUT);
-    analogSetPinAttenuation(ECG_OUTPUT_PIN, ADC_11db);  // Full 0-3.3V range
-    analogReadResolution(12);  // 12-bit (0-4095)
-
-    // Initialize I2C at lower speed for MAX30100 pull-up workaround
-    Wire.begin(21, 22);
-    Wire.setClock(100000);
-
-    if (!initializeSensor()) {
-        Serial.println();
-        Serial.println("FATAL: Could not initialize MAX30100");
-        Serial.println();
-        Serial.println("Troubleshooting:");
-        Serial.println("  1. Check wiring: VIN->3V3, GND->GND, SDA->21, SCL->22");
-        Serial.println("  2. Fix I2C pull-ups (known module defect):");
-        Serial.println("     Remove onboard 4.7k pull-ups to 1.8V");
-        Serial.println("     Add external 4.7k pull-ups from SDA/SCL to 3.3V");
-        Serial.println("  3. Run I2C scanner to check for address 0x57");
-        Serial.println();
-        Serial.println("System halted. Reset ESP32 to retry.");
+    // Initialize sensors
+    if (!sensorInit()) {
+        Serial.println("\nFATAL: Could not initialize MAX30100.");
+        Serial.println("Check wiring: VIN->3V3, GND->GND, SDA->21, SCL->22");
+        Serial.println("Fix I2C pull-ups if needed. System halted.");
 
         while (true) {
-            digitalWrite(BEAT_LED_PIN, HIGH);
-            delay(100);
-            digitalWrite(BEAT_LED_PIN, LOW);
-            delay(100);
+            digitalWrite(PIN_BEAT_LED, HIGH); delay(100);
+            digitalWrite(PIN_BEAT_LED, LOW);  delay(100);
         }
     }
 
-    Serial.println("[ECG]  AD8232 ready on GPIO34.");
-    Serial.println();
-    Serial.println("Place finger on MAX30100. Attach ECG electrodes.");
-    Serial.println("Send 'p' for Serial Plotter mode, 't' for text mode.");
-    Serial.println("--------------------------------------------");
-    Serial.println();
+    // Initialize WiFi (non-blocking)
+#if WIFI_MODE_ENABLED
+    wifiInit();
+    dataSenderInit();
+#else
+    wifiInit();  // Just derives device ID
+#endif
+
+    Serial.println("\nPlace finger on MAX30100. Attach ECG electrodes.");
+    Serial.println("Send 'p' for Plotter, 't' for Text.");
+    Serial.println("--------------------------------------------\n");
 }
 
-// --- Main Loop ---
+// ============================================================
+//  LOOP
+// ============================================================
 void loop() {
-    // CRITICAL: Must call as frequently as possible
-    pox.update();
+    // CRITICAL: Sensor update must be called as frequently as possible
+    sensorUpdate();
 
-    // --- ECG Sampling (100Hz) ---
-    if (millis() - tsLastEcgSample >= ECG_SAMPLE_PERIOD_MS) {
-        ecgLeadOff = (digitalRead(ECG_LO_PLUS_PIN) == HIGH)
-                  || (digitalRead(ECG_LO_MINUS_PIN) == HIGH);
-
-        lastEcgValue = ecgLeadOff ? 0 : analogRead(ECG_OUTPUT_PIN);
-
-        if (plotterMode) {
-            Serial.print("ECG:");
-            Serial.print(lastEcgValue);
-            Serial.print(",HR:");
-            Serial.print((int)lastReportedHR);
-            Serial.print(",SpO2:");
-            Serial.println(lastReportedSpO2);
-        } else {
-            if (++ecgTextCounter >= ECG_TEXT_DIVISOR) {
-                ecgTextCounter = 0;
-                if (ecgLeadOff) {
-                    Serial.println("[ECG] Leads OFF - reattach electrodes!");
-                } else {
-                    Serial.print("[ECG] ");
-                    Serial.print(lastEcgValue);
-                    Serial.println(" | Leads: OK");
-                }
-            }
-        }
-
-        tsLastEcgSample = millis();
+    // Serial output (always active)
+    if (plotterMode) {
+        serialOutputPlotter();
+    } else {
+        serialOutputText();
     }
+    serialReportVitals();
 
-    // Non-blocking LED off after beat blink
-    static uint32_t ledOnTime = 0;
-    if (digitalRead(BEAT_LED_PIN) == HIGH) {
-        if (ledOnTime == 0) {
-            ledOnTime = millis();
-        } else if (millis() - ledOnTime > 50) {
-            digitalWrite(BEAT_LED_PIN, LOW);
-            ledOnTime = 0;
-        }
+    // WiFi state machine (non-blocking)
+#if WIFI_MODE_ENABLED
+    wifiUpdate();
+    if (!plotterMode) {
+        printWifiStatus();
     }
+#endif
 
-    // Track beat activity for stall detection
-    if (beatCount != lastBeatCount) {
-        lastBeatCount = beatCount;
-        tsLastBeatChange = millis();
-    }
+    // Handle completed 10s data window
+    handleDataWindow();
 
-    // Auto-recover if sensor stalls
-    if (sensorOk && (millis() - tsLastBeatChange > STALL_TIMEOUT_MS) && beatCount > 0) {
-        if (!plotterMode) {
-            Serial.println();
-            Serial.println("[WARN] Sensor stalled. Reinitializing...");
-        }
-        sensorOk = false;
-
-        if (initializeSensor()) {
-            if (!plotterMode) Serial.println("[WARN] Recovery successful.");
-        } else {
-            if (!plotterMode) Serial.println("[WARN] Recovery failed. Will retry in 10s...");
-            tsLastBeatChange = millis();
-            sensorOk = true;
-        }
-    }
-
-    // Report HR/SpO2 periodically
-    if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-        float heartRate = pox.getHeartRate();
-        uint8_t spo2 = pox.getSpO2();
-
-        lastReportedHR = heartRate;
-        lastReportedSpO2 = spo2;
-
-        if (!plotterMode) {
-            Serial.print("HR: ");
-            if (heartRate < 1.0) {
-                Serial.print("--.-");
-            } else {
-                Serial.print(heartRate, 1);
-            }
-
-            Serial.print(" bpm  |  SpO2: ");
-            if (spo2 == 0) {
-                Serial.print("---");
-            } else {
-                Serial.print(spo2);
-            }
-
-            Serial.print("%  |  Beats: ");
-            Serial.println(beatCount);
-        }
-
-        tsLastReport = millis();
-    }
-
-    // Check for mode switching commands
+    // Serial commands
     checkSerialCommands();
 }
