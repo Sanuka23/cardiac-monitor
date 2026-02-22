@@ -49,9 +49,101 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
         {"$set": {"last_seen": datetime.utcnow()}},
     )
 
-    # TODO: Phase 2 — run ML prediction here and store result
-    # For now, return without prediction
-    return _vitals_doc_to_response(vitals_doc)
+    # Run ML prediction if models are available
+    prediction = None
+    try:
+        from app.services.ml_service import predict, _models_loaded, load_models
+
+        if not _models_loaded:
+            load_models()
+
+        if not data.ecg_lead_off and len(data.ecg_samples) >= 100:
+            # Get user profile for personalized prediction
+            device_doc = await db.devices.find_one({"device_id": data.device_id})
+            user_profile = None
+            history_features = None
+
+            if device_doc and device_doc.get("owner_user_id"):
+                user = await db.users.find_one({"_id": ObjectId(device_doc["owner_user_id"])})
+                if user and user.get("profile"):
+                    user_profile = user["profile"]
+
+                # Compute historical baselines
+                from datetime import timedelta
+                now = datetime.utcnow()
+                pipeline_24h = [
+                    {"$match": {"device_id": data.device_id,
+                                "created_at": {"$gte": now - timedelta(hours=24)}}},
+                    {"$group": {
+                        "_id": None,
+                        "avg_hr": {"$avg": "$heart_rate_bpm"},
+                        "std_hr": {"$stdDevPop": "$heart_rate_bpm"},
+                        "avg_spo2": {"$avg": "$spo2_percent"},
+                        "std_spo2": {"$stdDevPop": "$spo2_percent"},
+                        "count": {"$sum": 1},
+                    }},
+                ]
+                pipeline_7d = [
+                    {"$match": {"device_id": data.device_id,
+                                "created_at": {"$gte": now - timedelta(days=7)}}},
+                    {"$group": {
+                        "_id": None,
+                        "avg_hr": {"$avg": "$heart_rate_bpm"},
+                        "avg_spo2": {"$avg": "$spo2_percent"},
+                    }},
+                ]
+
+                stats_24h = await db.vitals.aggregate(pipeline_24h).to_list(1)
+                stats_7d = await db.vitals.aggregate(pipeline_7d).to_list(1)
+
+                if stats_24h:
+                    s = stats_24h[0]
+                    hr_std = s.get("std_hr", 1) or 1
+                    spo2_std = s.get("std_spo2", 1) or 1
+                    history_features = {
+                        "hr_baseline_24h": s.get("avg_hr", 0),
+                        "spo2_baseline_24h": s.get("avg_spo2", 0),
+                        "hr_deviation": abs(data.heart_rate_bpm - s.get("avg_hr", data.heart_rate_bpm)) / hr_std,
+                        "spo2_deviation": abs(data.spo2_percent - s.get("avg_spo2", data.spo2_percent)) / spo2_std,
+                        "readings_count_24h": s.get("count", 0),
+                    }
+                if stats_7d:
+                    if history_features is None:
+                        history_features = {}
+                    history_features["hr_baseline_7d"] = stats_7d[0].get("avg_hr", 0)
+
+            ml_result = predict(
+                ecg_samples=data.ecg_samples,
+                sample_rate_hz=data.sample_rate_hz,
+                heart_rate_bpm=data.heart_rate_bpm,
+                spo2_percent=data.spo2_percent,
+                user_profile=user_profile,
+                history_features=history_features,
+            )
+
+            if ml_result["risk_label"] != "unknown":
+                pred_doc = {
+                    "vitals_id": str(result.inserted_id),
+                    "device_id": data.device_id,
+                    "risk_score": ml_result["risk_score"],
+                    "risk_label": ml_result["risk_label"],
+                    "confidence": ml_result["confidence"],
+                    "features": ml_result["features"],
+                    "model_version": ml_result["model_version"],
+                    "created_at": datetime.utcnow(),
+                }
+                await db.predictions.insert_one(pred_doc)
+                prediction = {
+                    "risk_score": ml_result["risk_score"],
+                    "risk_label": ml_result["risk_label"],
+                    "confidence": ml_result["confidence"],
+                }
+    except ImportError:
+        pass  # ML dependencies not installed, skip prediction
+    except Exception as e:
+        print(f"[ML] Prediction error: {e}")
+
+    return _vitals_doc_to_response(vitals_doc, prediction)
 
 
 @router.get("/{device_id}/latest", response_model=VitalsResponse)

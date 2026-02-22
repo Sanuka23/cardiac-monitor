@@ -26,6 +26,8 @@ ml/data/*
 ml/models/*.joblib
 ml/models/*.pt
 ml/models/*.pkl
+ml/models/*.npz
+ml/models/*.png
 !ml/models/.gitkeep
 *.h5
 *.hdf5

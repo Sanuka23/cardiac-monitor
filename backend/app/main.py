@@ -11,6 +11,15 @@ from app.routes import vitals, auth, devices, health, predictions
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_db(settings.MONGODB_URI, settings.DATABASE_NAME)
+
+    # Load ML models (non-blocking — server starts even if models aren't ready)
+    try:
+        from app.services.ml_service import load_models
+        load_models()
+    except Exception as e:
+        print(f"[ML] Could not load models: {e}")
+        print("[ML] Server will run without predictions until models are available.")
+
     yield
     await close_db()
 
