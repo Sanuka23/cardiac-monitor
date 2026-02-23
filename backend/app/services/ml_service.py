@@ -10,15 +10,16 @@ from scipy.signal import resample
 import torch
 import joblib
 
-# Import model architecture
-ML_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml", "src")
+# Import model architecture from bundled ml_src/
+BACKEND_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
+ML_SRC = os.path.join(BACKEND_ROOT, "ml_src")
 sys.path.insert(0, ML_SRC)
 
 from net1d import Net1D
 from feature_extractor import extract_ecg_features, features_to_array, FEATURE_NAMES
 
-# Model paths (relative to backend/)
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml", "models")
+# Model paths — bundled in backend/ml_models/
+MODEL_DIR = os.path.join(BACKEND_ROOT, "ml_models")
 
 # Ensemble weights
 ECG_WEIGHT = 0.60

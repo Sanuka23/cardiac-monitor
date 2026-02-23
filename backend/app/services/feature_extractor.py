@@ -6,8 +6,8 @@ Thin wrapper that imports from ml/src/feature_extractor.py to stay in sync.
 import os
 import sys
 
-# Import from the shared ML source
-ML_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml", "src")
+# Import from the bundled ML source
+ML_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "ml_src")
 sys.path.insert(0, ML_SRC)
 
 from feature_extractor import (
