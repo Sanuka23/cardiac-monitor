@@ -41,6 +41,27 @@ class VitalsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Load history across all user's devices (user-centric).
+  Future<void> loadMyHistory({int limit = 200}) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait([
+        _api.getMyVitalsHistory(limit: limit),
+        _api.getMyPredictionHistory(limit: limit),
+      ]);
+      _vitalsHistory = results[0] as List<Vitals>;
+      _predictionHistory = results[1] as List<Prediction>;
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _loading = false;
+    notifyListeners();
+  }
+
   void clear() {
     _vitalsHistory = [];
     _predictionHistory = [];
