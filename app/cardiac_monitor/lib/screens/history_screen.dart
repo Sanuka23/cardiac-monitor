@@ -26,17 +26,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _loadData() {
-    final auth = context.read<AuthProvider>();
-    if (auth.deviceIds.isEmpty) return;
-    final deviceId = auth.deviceIds.first;
-
     final limit = switch (_rangeHours) {
       24 => 200,
       168 => 500,
       _ => 1000,
     };
 
-    context.read<VitalsProvider>().loadHistory(deviceId, limit: limit);
+    // User-based query — loads vitals across all user's devices
+    context.read<VitalsProvider>().loadMyHistory(limit: limit);
   }
 
   @override
