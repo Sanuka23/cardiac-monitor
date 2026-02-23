@@ -19,7 +19,9 @@ async def connect_db(uri: str, db_name: str):
         await db.users.create_index("email", unique=True)
         await db.devices.create_index("device_id", unique=True)
         await db.vitals.create_index([("device_id", 1), ("timestamp", -1)])
+        await db.vitals.create_index([("user_id", 1), ("timestamp", -1)])
         await db.predictions.create_index([("device_id", 1), ("created_at", -1)])
+        await db.predictions.create_index([("user_id", 1), ("created_at", -1)])
         print("[DB] Connected and indexes created.")
     except Exception as e:
         print(f"[DB] Warning: Could not create indexes: {e}")
