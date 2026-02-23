@@ -165,6 +165,30 @@ class ApiService {
     final list = resp.data['predictions'] as List;
     return list.map((p) => Prediction.fromJson(p)).toList();
   }
+
+  // ── User-based endpoints (across all devices) ──
+
+  /// Get vitals history across all user's devices.
+  Future<List<Vitals>> getMyVitalsHistory(
+      {int limit = 200, int offset = 0}) async {
+    final resp = await _dio.get(
+      '$_baseUrl${ApiPaths.myVitalsHistory}',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    final list = resp.data['vitals'] as List;
+    return list.map((v) => Vitals.fromJson(v)).toList();
+  }
+
+  /// Get prediction history across all user's devices.
+  Future<List<Prediction>> getMyPredictionHistory(
+      {int limit = 200, int offset = 0}) async {
+    final resp = await _dio.get(
+      '$_baseUrl${ApiPaths.myPredictionsHistory}',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    final list = resp.data['predictions'] as List;
+    return list.map((p) => Prediction.fromJson(p)).toList();
+  }
 }
 
 class _JwtInterceptor extends Interceptor {
