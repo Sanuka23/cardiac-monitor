@@ -2,8 +2,15 @@ name: Flutter CI
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+    paths:
+      - 'app/cardiac_monitor/**'
+      - '.github/workflows/flutter-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/cardiac_monitor/**'
+      - '.github/workflows/flutter-ci.yml'
 
 concurrency:
   group: flutter-${{ github.ref }}
