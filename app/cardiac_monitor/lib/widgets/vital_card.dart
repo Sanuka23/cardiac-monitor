@@ -49,7 +49,7 @@ class VitalCard extends StatelessWidget {
               Text(
                 label.toUpperCase(),
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: AppTheme.textSecondary(context),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.2,
@@ -65,7 +65,7 @@ class VitalCard extends StatelessWidget {
                 value: numericValue,
                 decimals: hasDecimals ? 1 : 0,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.textPrimary(context),
                   fontSize: 44,
                   fontWeight: FontWeight.w700,
                   height: 1,
@@ -77,7 +77,7 @@ class VitalCard extends StatelessWidget {
                 child: Text(
                   unit,
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondary(context),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),

@@ -24,11 +24,15 @@ class VitalsLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final gridColor = isLight ? Colors.grey[300]! : Colors.grey[800]!;
+    final labelColor = isLight ? Colors.grey[600]! : Colors.grey[500]!;
+
     if (spots.isEmpty) {
       return SizedBox(
         height: 200,
         child: Center(
-          child: Text('No data', style: TextStyle(color: Colors.grey[600])),
+          child: Text('No data', style: TextStyle(color: labelColor)),
         ),
       );
     }
@@ -36,17 +40,18 @@ class VitalsLineChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            title,
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+        if (title.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: labelColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
         SizedBox(
           height: 200,
           child: LineChart(
@@ -56,7 +61,7 @@ class VitalsLineChart extends StatelessWidget {
                 drawVerticalLine: false,
                 horizontalInterval: _calcInterval(),
                 getDrawingHorizontalLine: (value) => FlLine(
-                  color: Colors.grey[800]!,
+                  color: gridColor,
                   strokeWidth: 0.5,
                 ),
               ),
@@ -67,7 +72,7 @@ class VitalsLineChart extends StatelessWidget {
                     reservedSize: 40,
                     getTitlesWidget: (value, meta) => Text(
                       value.toInt().toString(),
-                      style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                      style: TextStyle(color: labelColor, fontSize: 10),
                     ),
                   ),
                 ),
@@ -81,8 +86,7 @@ class VitalsLineChart extends StatelessWidget {
                           DateTime.fromMillisecondsSinceEpoch(value.toInt());
                       return Text(
                         DateFormat.Hm().format(dt),
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 10),
+                        style: TextStyle(color: labelColor, fontSize: 10),
                       );
                     },
                   ),

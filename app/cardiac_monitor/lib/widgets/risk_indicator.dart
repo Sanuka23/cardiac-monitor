@@ -27,7 +27,9 @@ class RiskIndicator extends StatelessWidget {
       animationDuration: 800,
       animateFromLastPercent: true,
       circularStrokeCap: CircularStrokeCap.round,
-      backgroundColor: Colors.white.withValues(alpha: 0.06),
+      backgroundColor: Theme.of(context).brightness == Brightness.light
+          ? Colors.black.withValues(alpha: 0.06)
+          : Colors.white.withValues(alpha: 0.06),
       linearGradient: LinearGradient(
         colors: [
           color.withValues(alpha: 0.7),
@@ -40,7 +42,7 @@ class RiskIndicator extends StatelessWidget {
           Text(
             score > 0 ? score.toStringAsFixed(2) : '--',
             style: TextStyle(
-              color: Colors.white,
+              color: AppTheme.textPrimary(context),
               fontSize: size * 0.22,
               fontWeight: FontWeight.w700,
             ),

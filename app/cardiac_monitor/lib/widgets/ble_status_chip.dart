@@ -50,6 +50,7 @@ class _BleStatusChipState extends State<BleStatusChip>
 
   @override
   Widget build(BuildContext context) {
+    final disconnectedColor = AppTheme.textSecondary(context);
     final (label, color, icon) = switch (widget.state) {
       BleConnectionState.connected => (
           'Connected',
@@ -68,14 +69,14 @@ class _BleStatusChipState extends State<BleStatusChip>
         ),
       BleConnectionState.disconnected => (
           'Disconnected',
-          AppTheme.textSecondary,
+          disconnectedColor,
           Icons.bluetooth_disabled
         ),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: GlassDecoration.card(borderRadius: 24),
+      decoration: CardStyles.card(context, borderRadius: 24),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

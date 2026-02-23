@@ -14,14 +14,14 @@ class GlassCard extends StatelessWidget {
     this.padding,
     this.margin,
     this.topAccent,
-    this.borderRadius = 20,
+    this.borderRadius = 16,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: margin,
-      decoration: GlassDecoration.card(borderRadius: borderRadius),
+      decoration: CardStyles.card(context, borderRadius: borderRadius),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
