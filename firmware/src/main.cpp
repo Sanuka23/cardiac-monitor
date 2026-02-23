@@ -217,10 +217,16 @@ void setup() {
         dataSenderInit();
         Serial.println("[MAIN] Booting with stored WiFi credentials.");
     } else {
-        wifiInit();  // Derives device ID, won't connect without credentials
-        dataSenderInit();
+        // Use default credentials if defined (for testing)
+        #if defined(WIFI_DEFAULT_SSID) && defined(WIFI_DEFAULT_PASS)
+        Serial.println("[MAIN] No stored credentials. Using default WiFi for testing.");
+        wifiSetCredentials(WIFI_DEFAULT_SSID, WIFI_DEFAULT_PASS);
+        #else
         Serial.println("[MAIN] No WiFi credentials. Waiting for BLE provisioning...");
         Serial.println("[MAIN] Use nRF Connect or the Flutter app to configure WiFi.");
+        #endif
+        wifiInit();
+        dataSenderInit();
     }
 #else
     wifiInit();

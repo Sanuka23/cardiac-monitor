@@ -50,6 +50,10 @@
 // ============================================================
 //  WIFI CONFIGURATION (Phase 4: credentials from NVS via BLE)
 // ============================================================
+// Fallback WiFi credentials for testing (used when NVS is empty)
+#define WIFI_DEFAULT_SSID       "Home Net"
+#define WIFI_DEFAULT_PASS       "0663661047"
+
 #define WIFI_CONNECT_TIMEOUT_MS 15000
 #define WIFI_RECONNECT_BASE_MS  1000
 #define WIFI_RECONNECT_MAX_MS   30000
@@ -73,7 +77,7 @@
 // ============================================================
 //  API CONFIGURATION
 // ============================================================
-#define API_BASE_URL            "https://your-server.com"
+#define API_BASE_URL            "https://sanuka0523-cardiac-monitor-api.hf.space"
 #define API_VITALS_PATH         "/api/v1/vitals"
 #define API_KEY                 "esp32-cardiac-device-key-2026"
 #define API_TIMEOUT_MS          10000
