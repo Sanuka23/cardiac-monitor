@@ -112,75 +112,72 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.background),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // App bar
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(PhosphorIconsLight.arrowLeft,
-                          color: AppTheme.textPrimary),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Device Setup',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
-                        ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // App bar
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(PhosphorIconsLight.arrowLeft,
+                        color: AppTheme.textPrimary(context)),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Device Setup',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary(context),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context)
-                          .pushReplacementNamed('/home'),
-                      child: const Text('Skip',
-                          style: TextStyle(color: AppTheme.accent)),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Step indicator
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Row(
-                  children: [
-                    _stepDot(0, 'Scan'),
-                    _stepLine(0),
-                    _stepDot(1, 'WiFi'),
-                    _stepLine(1),
-                    _stepDot(2, 'Done'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: switch (_step) {
-                      0 => _buildScanStep(),
-                      1 => _buildWifiStep(),
-                      2 => _buildProvisioningStep(),
-                      _ => const SizedBox(),
-                    },
                   ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context)
+                        .pushReplacementNamed('/home'),
+                    child: Text('Skip',
+                        style: TextStyle(color: AppTheme.accent(context))),
+                  ),
+                ],
+              ),
+            ),
+
+            // Step indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Row(
+                children: [
+                  _stepDot(0, 'Scan'),
+                  _stepLine(0),
+                  _stepDot(1, 'WiFi'),
+                  _stepLine(1),
+                  _stepDot(2, 'Done'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: switch (_step) {
+                    0 => _buildScanStep(),
+                    1 => _buildWifiStep(),
+                    2 => _buildProvisioningStep(),
+                    _ => const SizedBox(),
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -198,17 +195,17 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: isActive ? AppGradients.primary : null,
-            color: isActive ? null : AppTheme.surfaceLight,
+            color: isActive ? null : AppTheme.surfaceVariant(context),
             border: isCurrent
                 ? Border.all(
-                    color: AppTheme.accent.withValues(alpha: 0.3), width: 3)
+                    color: AppTheme.accent(context).withValues(alpha: 0.3), width: 3)
                 : null,
           ),
           child: Center(
             child: Text(
               '${step + 1}',
               style: TextStyle(
-                color: isActive ? Colors.white : AppTheme.textSecondary,
+                color: isActive ? Colors.white : AppTheme.textSecondary(context),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -219,7 +216,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
         Text(
           label,
           style: TextStyle(
-            color: isActive ? AppTheme.textPrimary : AppTheme.textSecondary,
+            color: isActive ? AppTheme.textPrimary(context) : AppTheme.textSecondary(context),
             fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
@@ -238,7 +235,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             gradient: isActive ? AppGradients.primary : null,
-            color: isActive ? null : AppTheme.surfaceLight,
+            color: isActive ? null : AppTheme.surfaceVariant(context),
             borderRadius: BorderRadius.circular(1),
           ),
         ),
@@ -252,18 +249,18 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
       key: const ValueKey('scan'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Find Your Device',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.textPrimary(context),
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Make sure your ESP32 Cardiac Monitor is powered on.',
-          style: TextStyle(color: AppTheme.textSecondary),
+          style: TextStyle(color: AppTheme.textSecondary(context)),
         ),
         const SizedBox(height: 20),
         SizedBox(
@@ -330,11 +327,11 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppTheme.accent.withValues(alpha: 0.12),
+                            color: AppTheme.accent(context).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(PhosphorIconsLight.bluetooth,
-                              color: AppTheme.accent, size: 22),
+                          child: Icon(PhosphorIconsLight.bluetooth,
+                              color: AppTheme.accent(context), size: 22),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -343,15 +340,15 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                             children: [
                               Text(
                                 name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
+                                  color: AppTheme.textPrimary(context),
                                 ),
                               ),
                               Text(
                                 '${r.device.remoteId}',
-                                style: const TextStyle(
-                                  color: AppTheme.textSecondary,
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary(context),
                                   fontSize: 11,
                                 ),
                               ),
@@ -368,16 +365,16 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                                   const EdgeInsets.symmetric(horizontal: 1),
                               decoration: BoxDecoration(
                                 color: j < signalBars
-                                    ? AppTheme.accent
-                                    : AppTheme.surfaceLight,
+                                    ? AppTheme.accent(context)
+                                    : AppTheme.surfaceVariant(context),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             );
                           }),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(PhosphorIconsLight.arrowRight,
-                            color: AppTheme.textSecondary, size: 18),
+                        Icon(PhosphorIconsLight.arrowRight,
+                            color: AppTheme.textSecondary(context), size: 18),
                       ],
                     ),
                   ),
@@ -396,18 +393,18 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'WiFi Configuration',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
+              color: AppTheme.textPrimary(context),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Enter your WiFi credentials to connect the device.',
-            style: TextStyle(color: AppTheme.textSecondary),
+            style: TextStyle(color: AppTheme.textSecondary(context)),
           ),
           const SizedBox(height: 24),
           GlassCard(
@@ -416,23 +413,23 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
               children: [
                 TextField(
                   controller: _ssidC,
-                  style: const TextStyle(color: AppTheme.textPrimary),
+                  style: TextStyle(color: AppTheme.textPrimary(context)),
                   decoration: InputDecoration(
                     hintText: 'WiFi Network Name (SSID)',
                     hintStyle:
-                        const TextStyle(color: AppTheme.textSecondary),
-                    prefixIcon: const Icon(PhosphorIconsLight.wifiHigh,
-                        color: AppTheme.textSecondary),
+                        TextStyle(color: AppTheme.textSecondary(context)),
+                    prefixIcon: Icon(PhosphorIconsLight.wifiHigh,
+                        color: AppTheme.textSecondary(context)),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.04),
+                    fillColor: AppTheme.surfaceVariant(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                          color: AppTheme.accent, width: 1.5),
+                      borderSide: BorderSide(
+                          color: AppTheme.accent(context), width: 1.5),
                     ),
                   ),
                 ),
@@ -440,23 +437,23 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                 TextField(
                   controller: _passC,
                   obscureText: true,
-                  style: const TextStyle(color: AppTheme.textPrimary),
+                  style: TextStyle(color: AppTheme.textPrimary(context)),
                   decoration: InputDecoration(
                     hintText: 'WiFi Password',
                     hintStyle:
-                        const TextStyle(color: AppTheme.textSecondary),
-                    prefixIcon: const Icon(PhosphorIconsLight.lock,
-                        color: AppTheme.textSecondary),
+                        TextStyle(color: AppTheme.textSecondary(context)),
+                    prefixIcon: Icon(PhosphorIconsLight.lock,
+                        color: AppTheme.textSecondary(context)),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.04),
+                    fillColor: AppTheme.surfaceVariant(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                          color: AppTheme.accent, width: 1.5),
+                      borderSide: BorderSide(
+                          color: AppTheme.accent(context), width: 1.5),
                     ),
                   ),
                 ),
@@ -513,13 +510,13 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  color: AppTheme.accent(context).withValues(alpha: 0.1),
                 ),
-                child: const SizedBox(
+                child: SizedBox(
                   width: 48,
                   height: 48,
                   child: CircularProgressIndicator(
-                    color: AppTheme.accent,
+                    color: AppTheme.accent(context),
                     strokeWidth: 3,
                   ),
                 ),
@@ -547,10 +544,10 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
             const SizedBox(height: 24),
             Text(
               _provStatusText(status),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.textPrimary(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -559,7 +556,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
               ElevatedButton(
                 onPressed: () => setState(() => _step = 1),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.surfaceLight,
+                  backgroundColor: AppTheme.surfaceVariant(context),
                 ),
                 child: const Text('Try Again'),
               ),
@@ -572,31 +569,31 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                   children: [
                     TextField(
                       controller: _deviceIdC,
-                      style: const TextStyle(color: AppTheme.textPrimary),
+                      style: TextStyle(color: AppTheme.textPrimary(context)),
                       decoration: InputDecoration(
                         hintText: 'Device ID (e.g. ESP32_AABBCC)',
-                        hintStyle: const TextStyle(
-                            color: AppTheme.textSecondary),
-                        prefixIcon: const Icon(PhosphorIconsLight.cpu,
-                            color: AppTheme.textSecondary),
+                        hintStyle: TextStyle(
+                            color: AppTheme.textSecondary(context)),
+                        prefixIcon: Icon(PhosphorIconsLight.cpu,
+                            color: AppTheme.textSecondary(context)),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.04),
+                        fillColor: AppTheme.surfaceVariant(context),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                              color: AppTheme.accent, width: 1.5),
+                          borderSide: BorderSide(
+                              color: AppTheme.accent(context), width: 1.5),
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Find this in the ESP32 serial output:\n[WIFI] Device ID: ...',
                       style: TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 12),
+                          color: AppTheme.textSecondary(context), fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ],

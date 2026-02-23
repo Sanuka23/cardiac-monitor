@@ -112,21 +112,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   InputDecoration _fieldDecor(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppTheme.textSecondary),
-      prefixIcon: Icon(icon, size: 20, color: AppTheme.textSecondary),
+      hintStyle: TextStyle(color: AppTheme.textSecondary(context)),
+      prefixIcon: Icon(icon, size: 20, color: AppTheme.textSecondary(context)),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.04),
+      fillColor: AppTheme.surfaceVariant(context),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        borderSide: BorderSide(color: AppTheme.dividerColor(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppTheme.accent, width: 1.5),
+        borderSide: BorderSide(color: AppTheme.accent(context), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
@@ -137,200 +137,197 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profileProv = context.watch<ProfileProvider>();
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.background),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Health Profile',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ).animate().fadeIn(duration: 400.ms),
-                const SizedBox(height: 6),
-                const Text(
-                  'Your health data improves prediction accuracy',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Health Profile',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary(context),
                 ),
-                const SizedBox(height: 24),
+              ).animate().fadeIn(duration: 400.ms),
+              const SizedBox(height: 6),
+              Text(
+                'Your health data improves prediction accuracy',
+                style: TextStyle(color: AppTheme.textSecondary(context), fontSize: 14),
+              ),
+              const SizedBox(height: 24),
 
-                // Personal section
-                _sectionLabel('PERSONAL'),
-                const SizedBox(height: 10),
-                GlassCard(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _ageC,
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(
-                                  color: AppTheme.textPrimary),
-                              decoration:
-                                  _fieldDecor('Age', PhosphorIconsLight.calendar),
-                            ),
+              // Personal section
+              _sectionLabel('PERSONAL'),
+              const SizedBox(height: 10),
+              GlassCard(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _ageC,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                                color: AppTheme.textPrimary(context)),
+                            decoration:
+                                _fieldDecor('Age', PhosphorIconsLight.calendar),
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    // Sex selector
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceVariant(context),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: Row(
+                        children: [
+                          _sexTab('Male', 'male'),
+                          _sexTab('Female', 'female'),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      // Sex selector
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(14),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _heightC,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                                color: AppTheme.textPrimary(context)),
+                            decoration:
+                                _fieldDecor('Height (cm)', PhosphorIconsLight.ruler),
+                          ),
                         ),
-                        padding: const EdgeInsets.all(4),
-                        child: Row(
-                          children: [
-                            _sexTab('Male', 'male'),
-                            _sexTab('Female', 'female'),
-                          ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _weightC,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                                color: AppTheme.textPrimary(context)),
+                            decoration:
+                                _fieldDecor('Weight (kg)', PhosphorIconsLight.scales),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _heightC,
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(
-                                  color: AppTheme.textPrimary),
-                              decoration:
-                                  _fieldDecor('Height (cm)', PhosphorIconsLight.ruler),
+                      ],
+                    ),
+                  ],
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 100.ms)
+                  .slideY(begin: 0.1),
+
+              const SizedBox(height: 20),
+              _sectionLabel('MEDICAL HISTORY'),
+              const SizedBox(height: 10),
+              GlassCard(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
+                child: Column(
+                  children: [
+                    _toggle('Diabetic', PhosphorIconsLight.stethoscope, _diabetic,
+                        (v) => setState(() => _diabetic = v)),
+                    _divider(),
+                    _toggle('Hypertensive', PhosphorIconsLight.heartbeat, _hypertensive,
+                        (v) => setState(() => _hypertensive = v)),
+                    _divider(),
+                    _toggle('Smoker', PhosphorIconsLight.prohibit, _smoker,
+                        (v) => setState(() => _smoker = v)),
+                    _divider(),
+                    _toggle(
+                        'Family History',
+                        PhosphorIconsLight.users,
+                        _familyHistory,
+                        (v) => setState(() => _familyHistory = v)),
+                  ],
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 200.ms)
+                  .slideY(begin: 0.1),
+
+              const SizedBox(height: 20),
+              _sectionLabel('CONDITIONS & MEDICATIONS'),
+              const SizedBox(height: 10),
+              GlassCard(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _conditionsC,
+                      style:
+                          TextStyle(color: AppTheme.textPrimary(context)),
+                      decoration: _fieldDecor(
+                          'Known conditions (comma separated)',
+                          PhosphorIconsLight.fileText),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _medicationsC,
+                      style:
+                          TextStyle(color: AppTheme.textPrimary(context)),
+                      decoration: _fieldDecor(
+                          'Medications (comma separated)',
+                          PhosphorIconsLight.pill),
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 300.ms)
+                  .slideY(begin: 0.1),
+
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.primary,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: profileProv.saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: profileProv.saving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text(
+                            'Save Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _weightC,
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(
-                                  color: AppTheme.textPrimary),
-                              decoration:
-                                  _fieldDecor('Weight (kg)', PhosphorIconsLight.scales),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
-                )
-                    .animate()
-                    .fadeIn(duration: 500.ms, delay: 100.ms)
-                    .slideY(begin: 0.1),
-
-                const SizedBox(height: 20),
-                _sectionLabel('MEDICAL HISTORY'),
-                const SizedBox(height: 10),
-                GlassCard(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  child: Column(
-                    children: [
-                      _toggle('Diabetic', PhosphorIconsLight.stethoscope, _diabetic,
-                          (v) => setState(() => _diabetic = v)),
-                      _divider(),
-                      _toggle('Hypertensive', PhosphorIconsLight.heartbeat, _hypertensive,
-                          (v) => setState(() => _hypertensive = v)),
-                      _divider(),
-                      _toggle('Smoker', PhosphorIconsLight.prohibit, _smoker,
-                          (v) => setState(() => _smoker = v)),
-                      _divider(),
-                      _toggle(
-                          'Family History',
-                          PhosphorIconsLight.users,
-                          _familyHistory,
-                          (v) => setState(() => _familyHistory = v)),
-                    ],
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 500.ms, delay: 200.ms)
-                    .slideY(begin: 0.1),
-
-                const SizedBox(height: 20),
-                _sectionLabel('CONDITIONS & MEDICATIONS'),
-                const SizedBox(height: 10),
-                GlassCard(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _conditionsC,
-                        style:
-                            const TextStyle(color: AppTheme.textPrimary),
-                        decoration: _fieldDecor(
-                            'Known conditions (comma separated)',
-                            PhosphorIconsLight.fileText),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _medicationsC,
-                        style:
-                            const TextStyle(color: AppTheme.textPrimary),
-                        decoration: _fieldDecor(
-                            'Medications (comma separated)',
-                            PhosphorIconsLight.pill),
-                        maxLines: 2,
-                      ),
-                    ],
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 500.ms, delay: 300.ms)
-                    .slideY(begin: 0.1),
-
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: AppGradients.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: ElevatedButton(
-                      onPressed: profileProv.saving ? null : _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: profileProv.saving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text(
-                              'Save Profile',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 500.ms, delay: 400.ms)
-                    .slideY(begin: 0.1),
-              ],
-            ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 400.ms)
+                  .slideY(begin: 0.1),
+            ],
           ),
         ),
       ),
@@ -340,10 +337,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _sectionLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        color: AppTheme.accent,
+        color: AppTheme.accent(context),
         letterSpacing: 1.2,
       ),
     );
@@ -365,7 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : AppTheme.textSecondary,
+                color: selected ? Colors.white : AppTheme.textSecondary(context),
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -379,7 +376,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _divider() {
     return Divider(
       height: 1,
-      color: Colors.white.withValues(alpha: 0.06),
+      color: AppTheme.dividerColor(context),
       indent: 16,
       endIndent: 16,
     );
@@ -390,17 +387,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return SwitchListTile(
       title: Row(
         children: [
-          Icon(icon, size: 18, color: AppTheme.textSecondary),
+          Icon(icon, size: 18, color: AppTheme.textSecondary(context)),
           const SizedBox(width: 12),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 14, color: AppTheme.textPrimary)),
+              style: TextStyle(
+                  fontSize: 14, color: AppTheme.textPrimary(context))),
         ],
       ),
       value: value,
       onChanged: onChanged,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      activeThumbColor: AppTheme.accent,
+      activeThumbColor: AppTheme.accent(context),
     );
   }
 }

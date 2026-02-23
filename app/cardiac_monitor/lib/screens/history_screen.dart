@@ -47,18 +47,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     if (auth.deviceIds.isEmpty) {
       return Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(gradient: AppGradients.background),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(PhosphorIconsLight.chartLine, size: 48, color: AppTheme.textSecondary),
-                const SizedBox(height: 16),
-                const Text('No device registered',
-                    style: TextStyle(color: AppTheme.textSecondary)),
-              ],
-            ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(PhosphorIconsLight.chartLine, size: 48, color: AppTheme.textSecondary(context)),
+              const SizedBox(height: 16),
+              Text('No device registered',
+                  style: TextStyle(color: AppTheme.textSecondary(context))),
+            ],
           ),
         ),
       );
@@ -100,126 +97,123 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .toList();
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.background),
-        child: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: () async => _loadData(),
-            color: AppTheme.accent,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'History',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ).animate().fadeIn(duration: 400.ms),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Track your vitals over time',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                    ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async => _loadData(),
+          color: AppTheme.accent(context),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'History',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary(context),
                   ),
-                  const SizedBox(height: 20),
+                ).animate().fadeIn(duration: 400.ms),
+                const SizedBox(height: 6),
+                Text(
+                  'Track your vitals over time',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary(context),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-                  // Range chips
-                  Row(
-                    children: [
-                      _rangeChip('24h', 24),
-                      const SizedBox(width: 10),
-                      _rangeChip('7d', 168),
-                      const SizedBox(width: 10),
-                      _rangeChip('30d', 720),
-                    ],
-                  ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-                  const SizedBox(height: 24),
-
-                  if (vitals.loading)
-                    ..._buildShimmerCharts()
-                  else if (vitals.error != null)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            Icon(PhosphorIconsLight.warning,
-                                size: 40, color: Colors.red[400]),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Error loading data',
-                              style: TextStyle(color: Colors.red[400]),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else ...[
-                    _chartSection(
-                      title: 'Heart Rate',
-                      unit: 'bpm',
-                      icon: PhosphorIconsLight.heartbeat,
-                      gradient: AppGradients.hr,
-                      child: VitalsLineChart(
-                        title: '',
-                        spots: hrSpots,
-                        lineColor: const Color(0xFF00BFA5),
-                        minY: 40,
-                        maxY: 160,
-                        normalMin: 60,
-                        normalMax: 100,
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(duration: 500.ms, delay: 200.ms)
-                        .slideY(begin: 0.1),
-                    const SizedBox(height: 16),
-                    _chartSection(
-                      title: 'SpO2',
-                      unit: '%',
-                      icon: PhosphorIconsLight.drop,
-                      gradient: AppGradients.spo2,
-                      child: VitalsLineChart(
-                        title: '',
-                        spots: spo2Spots,
-                        lineColor: const Color(0xFF448AFF),
-                        minY: 85,
-                        maxY: 100,
-                        normalMin: 95,
-                        normalMax: 100,
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(duration: 500.ms, delay: 300.ms)
-                        .slideY(begin: 0.1),
-                    const SizedBox(height: 16),
-                    _chartSection(
-                      title: 'Risk Score',
-                      unit: '',
-                      icon: PhosphorIconsLight.shieldCheck,
-                      gradient: AppGradients.risk,
-                      child: VitalsLineChart(
-                        title: '',
-                        spots: riskSpots,
-                        lineColor: const Color(0xFFFF9800),
-                        minY: 0,
-                        maxY: 1,
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(duration: 500.ms, delay: 400.ms)
-                        .slideY(begin: 0.1),
-                    const SizedBox(height: 24),
+                // Range chips
+                Row(
+                  children: [
+                    _rangeChip('24h', 24),
+                    const SizedBox(width: 10),
+                    _rangeChip('7d', 168),
+                    const SizedBox(width: 10),
+                    _rangeChip('30d', 720),
                   ],
+                ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+                const SizedBox(height: 24),
+
+                if (vitals.loading)
+                  ..._buildShimmerCharts()
+                else if (vitals.error != null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Column(
+                        children: [
+                          Icon(PhosphorIconsLight.warning,
+                              size: 40, color: Colors.red[400]),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Error loading data',
+                            style: TextStyle(color: Colors.red[400]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  _chartSection(
+                    title: 'Heart Rate',
+                    unit: 'bpm',
+                    icon: PhosphorIconsLight.heartbeat,
+                    gradient: AppGradients.hr,
+                    child: VitalsLineChart(
+                      title: '',
+                      spots: hrSpots,
+                      lineColor: const Color(0xFF00BFA5),
+                      minY: 40,
+                      maxY: 160,
+                      normalMin: 60,
+                      normalMax: 100,
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 200.ms)
+                      .slideY(begin: 0.1),
+                  const SizedBox(height: 16),
+                  _chartSection(
+                    title: 'SpO2',
+                    unit: '%',
+                    icon: PhosphorIconsLight.drop,
+                    gradient: AppGradients.spo2,
+                    child: VitalsLineChart(
+                      title: '',
+                      spots: spo2Spots,
+                      lineColor: const Color(0xFF448AFF),
+                      minY: 85,
+                      maxY: 100,
+                      normalMin: 95,
+                      normalMax: 100,
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 300.ms)
+                      .slideY(begin: 0.1),
+                  const SizedBox(height: 16),
+                  _chartSection(
+                    title: 'Risk Score',
+                    unit: '',
+                    icon: PhosphorIconsLight.shieldCheck,
+                    gradient: AppGradients.risk,
+                    child: VitalsLineChart(
+                      title: '',
+                      spots: riskSpots,
+                      lineColor: const Color(0xFFFF9800),
+                      minY: 0,
+                      maxY: 1,
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 400.ms)
+                      .slideY(begin: 0.1),
+                  const SizedBox(height: 24),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -242,12 +236,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: AppTheme.textSecondary),
+              Icon(icon, size: 16, color: AppTheme.textSecondary(context)),
               const SizedBox(width: 8),
               Text(
                 '${title.toUpperCase()} ${unit.isNotEmpty ? "($unit)" : ""}',
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
+                style: TextStyle(
+                  color: AppTheme.textSecondary(context),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.0,
@@ -268,12 +262,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       (i) => Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Shimmer.fromColors(
-          baseColor: AppTheme.surfaceLight,
-          highlightColor: AppTheme.cardBg,
+          baseColor: AppTheme.surfaceVariant(context),
+          highlightColor: AppTheme.cardBackground(context),
           child: Container(
             height: 220,
             decoration: BoxDecoration(
-              color: AppTheme.cardBg,
+              color: AppTheme.cardBackground(context),
               borderRadius: BorderRadius.circular(20),
             ),
           ),
@@ -294,18 +288,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           gradient: selected ? AppGradients.primary : null,
-          color: selected ? null : Colors.white.withValues(alpha: 0.05),
+          color: selected ? null : AppTheme.surfaceVariant(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
                 ? Colors.transparent
-                : Colors.white.withValues(alpha: 0.08),
+                : AppTheme.dividerColor(context),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : AppTheme.textSecondary,
+            color: selected ? Colors.white : AppTheme.textSecondary(context),
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),

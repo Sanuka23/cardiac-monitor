@@ -69,182 +69,179 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLoading = auth.state == AuthState.loading;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.background),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Logo
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.accent.withValues(alpha: 0.2),
-                          AppTheme.accent.withValues(alpha: 0.05),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: const Icon(
-                      PhosphorIconsLight.heartbeat,
-                      size: 48,
-                      color: AppTheme.accent,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 600.ms)
-                      .scale(begin: const Offset(0.8, 0.8)),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Cardiac Monitor',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 600.ms, delay: 100.ms)
-                      .slideY(begin: 0.2),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Real-time heart health monitoring',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 600.ms, delay: 200.ms)
-                      .slideY(begin: 0.2),
-                  const SizedBox(height: 36),
-
-                  // Form card
-                  GlassCard(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        // Toggle
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: Row(
-                            children: [
-                              _tab('Login', !_isRegister),
-                              _tab('Register', _isRegister),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              if (_isRegister)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: _buildField(
-                                    controller: _nameC,
-                                    hint: 'Full name',
-                                    icon: PhosphorIconsLight.user,
-                                    validator: (v) =>
-                                        (v == null || v.trim().isEmpty)
-                                            ? 'Name required'
-                                            : null,
-                                  ),
-                                ),
-                              _buildField(
-                                controller: _emailC,
-                                hint: 'Email address',
-                                icon: PhosphorIconsLight.envelope,
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (v) =>
-                                    (v == null || !v.contains('@'))
-                                        ? 'Valid email required'
-                                        : null,
-                              ),
-                              const SizedBox(height: 14),
-                              _buildField(
-                                controller: _passwordC,
-                                hint: 'Password',
-                                icon: PhosphorIconsLight.lock,
-                                obscure: _obscure,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscure
-                                        ? PhosphorIconsLight.eyeSlash
-                                        : PhosphorIconsLight.eye,
-                                    size: 20,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                  onPressed: () =>
-                                      setState(() => _obscure = !_obscure),
-                                ),
-                                validator: (v) => (v == null || v.length < 6)
-                                    ? 'Min 6 characters'
-                                    : null,
-                              ),
-                              const SizedBox(height: 28),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: AppGradients.primary,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: ElevatedButton(
-                                    onPressed: isLoading ? null : _submit,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      shadowColor: Colors.transparent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : Text(
-                                            _isRegister
-                                                ? 'Create Account'
-                                                : 'Sign In',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Logo
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.accent(context).withValues(alpha: 0.2),
+                        AppTheme.accent(context).withValues(alpha: 0.05),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ).animate().fadeIn(duration: 600.ms, delay: 300.ms).slideY(
-                      begin: 0.15),
-                ],
-              ),
+                  ),
+                  child: Icon(
+                    PhosphorIconsLight.heartbeat,
+                    size: 48,
+                    color: AppTheme.accent(context),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 600.ms)
+                    .scale(begin: const Offset(0.8, 0.8)),
+                const SizedBox(height: 20),
+                Text(
+                  'Cardiac Monitor',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary(context),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 600.ms, delay: 100.ms)
+                    .slideY(begin: 0.2),
+                const SizedBox(height: 6),
+                Text(
+                  'Real-time heart health monitoring',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary(context),
+                    fontSize: 14,
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 600.ms, delay: 200.ms)
+                    .slideY(begin: 0.2),
+                const SizedBox(height: 36),
+
+                // Form card
+                GlassCard(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      // Toggle
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceVariant(context),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: Row(
+                          children: [
+                            _tab('Login', !_isRegister),
+                            _tab('Register', _isRegister),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            if (_isRegister)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: _buildField(
+                                  controller: _nameC,
+                                  hint: 'Full name',
+                                  icon: PhosphorIconsLight.user,
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                          ? 'Name required'
+                                          : null,
+                                ),
+                              ),
+                            _buildField(
+                              controller: _emailC,
+                              hint: 'Email address',
+                              icon: PhosphorIconsLight.envelope,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (v) =>
+                                  (v == null || !v.contains('@'))
+                                      ? 'Valid email required'
+                                      : null,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildField(
+                              controller: _passwordC,
+                              hint: 'Password',
+                              icon: PhosphorIconsLight.lock,
+                              obscure: _obscure,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscure
+                                      ? PhosphorIconsLight.eyeSlash
+                                      : PhosphorIconsLight.eye,
+                                  size: 20,
+                                  color: AppTheme.textSecondary(context),
+                                ),
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                              ),
+                              validator: (v) => (v == null || v.length < 6)
+                                  ? 'Min 6 characters'
+                                  : null,
+                            ),
+                            const SizedBox(height: 28),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: AppGradients.primary,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: isLoading ? null : _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : Text(
+                                          _isRegister
+                                              ? 'Create Account'
+                                              : 'Sign In',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(duration: 600.ms, delay: 300.ms).slideY(
+                    begin: 0.15),
+              ],
             ),
           ),
         ),
@@ -265,26 +262,25 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscure,
-      style: const TextStyle(color: AppTheme.textPrimary),
+      style: TextStyle(color: AppTheme.textPrimary(context)),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, size: 20, color: AppTheme.textSecondary),
+        hintStyle: TextStyle(color: AppTheme.textSecondary(context)),
+        prefixIcon: Icon(icon, size: 20, color: AppTheme.textSecondary(context)),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.04),
+        fillColor: AppTheme.surfaceVariant(context),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          borderSide: BorderSide(color: AppTheme.dividerColor(context)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppTheme.accent, width: 1.5),
+          borderSide: BorderSide(color: AppTheme.accent(context), width: 1.5),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -308,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : AppTheme.textSecondary,
+                color: selected ? Colors.white : AppTheme.textSecondary(context),
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
