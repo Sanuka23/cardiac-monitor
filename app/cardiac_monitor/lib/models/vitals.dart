@@ -1,3 +1,6 @@
+/// Single vitals reading stored by the backend from an ESP32 device.
+///
+/// Returned by `GET /vitals/history/{device_id}` for chart display.
 class Vitals {
   final String? id;
   final String deviceId;

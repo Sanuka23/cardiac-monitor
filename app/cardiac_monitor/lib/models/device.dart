@@ -1,3 +1,6 @@
+/// Registered ESP32 device linked to a user account.
+///
+/// Returned by `GET /devices/` and created via `POST /devices/register`.
 class Device {
   final String deviceId;
   final String? label;

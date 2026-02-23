@@ -1,3 +1,7 @@
+/// ML risk prediction result from the backend ensemble model.
+///
+/// Each prediction contains a [riskScore] (0-1), human-readable [riskLabel],
+/// and model [confidence]. Returned by `GET /predict/history/{device_id}`.
 class Prediction {
   final String? id;
   final String deviceId;

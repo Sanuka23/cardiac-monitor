@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 
+/// Handles saving the user's health profile to the backend.
+///
+/// Exposes [saving], [saved], and [error] states for the Profile screen.
 class ProfileProvider extends ChangeNotifier {
   final ApiService _api;
 

@@ -1,3 +1,7 @@
+/// Live vitals received over BLE from the ESP32 Cardiac Monitor characteristic.
+///
+/// The [deviceStatus] byte is a bitmask: bit 0 = sensor OK, bit 1 = WiFi ready,
+/// bit 2 = ECG lead-off, bit 3 = API ready. Convenience getters decode each flag.
 class BleVitals {
   final double heartRate;
   final int spo2;

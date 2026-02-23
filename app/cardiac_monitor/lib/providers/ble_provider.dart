@@ -4,6 +4,11 @@ import '../models/ble_vitals.dart';
 import '../services/ble_service.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+/// Bridges [BleService] to the widget tree via Provider.
+///
+/// Exposes BLE connection state, scan results, live vitals data,
+/// and WiFi provisioning status. Automatically subscribes to BLE
+/// streams and calls [notifyListeners] on updates.
 class BleProvider extends ChangeNotifier {
   final BleService _ble;
 

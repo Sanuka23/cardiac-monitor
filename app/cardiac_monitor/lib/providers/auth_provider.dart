@@ -4,8 +4,13 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/auth_storage.dart';
 
+/// Authentication lifecycle states.
 enum AuthState { initial, loading, authenticated, unauthenticated }
 
+/// Manages user authentication state, JWT storage, and auto-login.
+///
+/// On app start, [tryAutoLogin] checks for a stored JWT and validates it
+/// against the backend. Exposes [user], [deviceIds], and [error] for the UI.
 class AuthProvider extends ChangeNotifier {
   final ApiService _api;
   final AuthStorage _authStorage;

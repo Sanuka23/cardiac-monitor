@@ -3,6 +3,9 @@ import '../models/vitals.dart';
 import '../models/prediction.dart';
 import '../services/api_service.dart';
 
+/// Loads and caches vitals and prediction history from the backend API.
+///
+/// Used by the History screen to display HR, SpO2, and risk charts.
 class VitalsProvider extends ChangeNotifier {
   final ApiService _api;
 

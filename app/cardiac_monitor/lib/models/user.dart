@@ -1,3 +1,6 @@
+/// Authenticated user profile returned by `GET /users/me`.
+///
+/// Contains account info, linked [deviceIds], and an optional [healthProfile].
 class User {
   final String id;
   final String email;
@@ -24,6 +27,9 @@ class User {
       );
 }
 
+/// Patient health profile used by the ML risk model for context-aware predictions.
+///
+/// Fields map directly to the backend `health_profile` sub-document.
 class HealthProfile {
   final int? age;
   final String? sex;
@@ -76,6 +82,7 @@ class HealthProfile {
       };
 }
 
+/// JWT token pair returned by `POST /auth/login` and `POST /auth/register`.
 class TokenResponse {
   final String accessToken;
   final String tokenType;
