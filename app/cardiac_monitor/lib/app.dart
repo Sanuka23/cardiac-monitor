@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/device_setup_screen.dart';
 import 'navigation/app_shell.dart';
@@ -11,10 +12,14 @@ class CardiacMonitorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = context.watch<ThemeProvider>().mode;
+
     return MaterialApp(
       title: 'Cardiac Monitor',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       home: const _AuthGate(),
       routes: {
         '/login': (_) => const LoginScreen(),
@@ -43,16 +48,18 @@ class _AuthGateState extends State<_AuthGate> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
+    final accent = AppTheme.accent(context);
+
     return switch (auth.state) {
-      AuthState.initial || AuthState.loading => const Scaffold(
+      AuthState.initial || AuthState.loading => Scaffold(
           body: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.monitor_heart_outlined,
-                    size: 56, color: Color(0xFF00BFA5)),
-                SizedBox(height: 20),
-                CircularProgressIndicator(color: Color(0xFF00BFA5)),
+                    size: 56, color: accent),
+                const SizedBox(height: 20),
+                CircularProgressIndicator(color: accent),
               ],
             ),
           ),
