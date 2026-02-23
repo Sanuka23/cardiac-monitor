@@ -49,3 +49,4 @@ app/cardiac_monitor/.flutter-plugins-dependencies
 
 # === Claude ===
 .claude/
+.vscode/

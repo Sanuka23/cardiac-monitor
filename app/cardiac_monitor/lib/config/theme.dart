@@ -70,4 +70,74 @@ class AppTheme {
     if (spo2 >= 90) return riskModerate;
     return riskHigh;
   }
+
+  // Core palette
+  static const Color scaffoldBg = Color(0xFF0D1117);
+  static const Color cardBg = Color(0xFF161B22);
+  static const Color surfaceLight = Color(0xFF21262D);
+  static const Color accent = Color(0xFF00BFA5);
+  static const Color textPrimary = Color(0xFFE6EDF3);
+  static const Color textSecondary = Color(0xFF8B949E);
+}
+
+class AppGradients {
+  static const LinearGradient hr = LinearGradient(
+    colors: [Color(0xFF00BFA5), Color(0xFF00E5FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient spo2 = LinearGradient(
+    colors: [Color(0xFF448AFF), Color(0xFFAA00FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient risk = LinearGradient(
+    colors: [Color(0xFFFF9800), Color(0xFFF44336)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient primary = LinearGradient(
+    colors: [Color(0xFF00BFA5), Color(0xFF00E5FF)],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  static const LinearGradient background = LinearGradient(
+    colors: [Color(0xFF0D1117), Color(0xFF111D2B)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+}
+
+class GlassDecoration {
+  static BoxDecoration card({
+    double borderRadius = 20,
+    Color? borderColor,
+  }) {
+    return BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.05),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: borderColor ?? Colors.white.withValues(alpha: 0.08),
+        width: 1,
+      ),
+    );
+  }
+
+  static BoxDecoration cardWithGradientBorder({
+    double borderRadius = 20,
+    required Gradient gradient,
+  }) {
+    return BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.05),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: Colors.white.withValues(alpha: 0.08),
+        width: 1,
+      ),
+    );
+  }
 }
