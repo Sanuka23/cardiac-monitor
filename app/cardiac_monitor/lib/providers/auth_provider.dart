@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
@@ -29,6 +30,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> tryAutoLogin() async {
     final token = await _authStorage.getToken();
+    debugPrint('[AUTH] tryAutoLogin: token=${token != null ? "present" : "null"}');
     if (token == null) {
       _state = AuthState.unauthenticated;
       notifyListeners();
@@ -40,8 +42,10 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _user = await _api.getMe();
+      debugPrint('[AUTH] autoLogin success: user=${_user?.name}');
       _state = AuthState.authenticated;
-    } on DioException {
+    } on DioException catch (e) {
+      debugPrint('[AUTH] autoLogin failed: ${e.type} status=${e.response?.statusCode}');
       await _authStorage.deleteToken();
       _state = AuthState.unauthenticated;
     }
@@ -49,19 +53,29 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> login(String email, String password) async {
+    debugPrint('[AUTH] login called: email=$email');
     _state = AuthState.loading;
     _error = null;
     notifyListeners();
 
     try {
       final token = await _api.login(email, password);
+      debugPrint('[AUTH] login got token: ${token.accessToken.substring(0, 20)}...');
       await _authStorage.saveToken(token.accessToken);
       _user = await _api.getMe();
+      debugPrint('[AUTH] login success: user=${_user?.name} devices=${_user?.deviceIds}');
       _state = AuthState.authenticated;
       notifyListeners();
       return true;
     } on DioException catch (e) {
       _error = _extractError(e);
+      debugPrint('[AUTH] login error: $_error (type=${e.type} status=${e.response?.statusCode})');
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('[AUTH] login unexpected error: $e');
       _state = AuthState.unauthenticated;
       notifyListeners();
       return false;
@@ -69,19 +83,29 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> register(String email, String password, String name) async {
+    debugPrint('[AUTH] register called: email=$email name=$name');
     _state = AuthState.loading;
     _error = null;
     notifyListeners();
 
     try {
       final token = await _api.register(email, password, name);
+      debugPrint('[AUTH] register got token: ${token.accessToken.substring(0, 20)}...');
       await _authStorage.saveToken(token.accessToken);
       _user = await _api.getMe();
+      debugPrint('[AUTH] register success: user=${_user?.name} devices=${_user?.deviceIds}');
       _state = AuthState.authenticated;
       notifyListeners();
       return true;
     } on DioException catch (e) {
       _error = _extractError(e);
+      debugPrint('[AUTH] register error: $_error (type=${e.type} status=${e.response?.statusCode})');
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('[AUTH] register unexpected error: $e');
       _state = AuthState.unauthenticated;
       notifyListeners();
       return false;

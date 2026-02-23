@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../config/constants.dart';
 import '../models/user.dart';
@@ -34,30 +35,54 @@ class ApiService {
   /// Register a new user account and return JWT tokens.
   Future<TokenResponse> register(
       String email, String password, String name) async {
-    final resp = await _dio.post('$_baseUrl${ApiPaths.register}', data: {
-      'email': email,
-      'password': password,
-      'name': name,
-    });
-    return TokenResponse.fromJson(resp.data);
+    final url = '$_baseUrl${ApiPaths.register}';
+    debugPrint('[API] POST $url  email=$email name=$name');
+    try {
+      final resp = await _dio.post(url, data: {
+        'email': email,
+        'password': password,
+        'name': name,
+      });
+      debugPrint('[API] register OK: ${resp.statusCode}');
+      return TokenResponse.fromJson(resp.data);
+    } on DioException catch (e) {
+      debugPrint('[API] register FAILED: ${e.type} status=${e.response?.statusCode} body=${e.response?.data}');
+      rethrow;
+    }
   }
 
   /// Authenticate with email/password and return JWT tokens.
   Future<TokenResponse> login(String email, String password) async {
-    final resp = await _dio.post(
-      '$_baseUrl${ApiPaths.login}',
-      data: {
-        'email': email,
-        'password': password,
-      },
-    );
-    return TokenResponse.fromJson(resp.data);
+    final url = '$_baseUrl${ApiPaths.login}';
+    debugPrint('[API] POST $url  email=$email');
+    try {
+      final resp = await _dio.post(
+        url,
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+      debugPrint('[API] login OK: ${resp.statusCode}');
+      return TokenResponse.fromJson(resp.data);
+    } on DioException catch (e) {
+      debugPrint('[API] login FAILED: ${e.type} status=${e.response?.statusCode} body=${e.response?.data}');
+      rethrow;
+    }
   }
 
   /// Fetch the currently authenticated user profile.
   Future<User> getMe() async {
-    final resp = await _dio.get('$_baseUrl${ApiPaths.me}');
-    return User.fromJson(resp.data);
+    final url = '$_baseUrl${ApiPaths.me}';
+    debugPrint('[API] GET $url');
+    try {
+      final resp = await _dio.get(url);
+      debugPrint('[API] getMe OK: ${resp.data}');
+      return User.fromJson(resp.data);
+    } on DioException catch (e) {
+      debugPrint('[API] getMe FAILED: ${e.type} status=${e.response?.statusCode} body=${e.response?.data}');
+      rethrow;
+    }
   }
 
   Future<User> updateProfile(Map<String, dynamic> profileData) async {
