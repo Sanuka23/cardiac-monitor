@@ -48,13 +48,19 @@
 #define MAX_BEATS_PER_WINDOW    30      // Max ~180bpm for 10s
 
 // ============================================================
-//  WIFI CONFIGURATION (hardcoded for Phase 3)
+//  WIFI CONFIGURATION (Phase 4: credentials from NVS via BLE)
 // ============================================================
-#define WIFI_SSID               "YOUR_WIFI_SSID"
-#define WIFI_PASSWORD           "YOUR_WIFI_PASSWORD"
 #define WIFI_CONNECT_TIMEOUT_MS 15000
 #define WIFI_RECONNECT_BASE_MS  1000
 #define WIFI_RECONNECT_MAX_MS   30000
+#define WIFI_BOOT_MAX_RETRIES   3       // Fail count before entering provisioning
+
+// ============================================================
+//  NVS STORAGE CONFIGURATION
+// ============================================================
+#define NVS_NAMESPACE           "cardiac"
+#define NVS_KEY_SSID            "wifi_ssid"
+#define NVS_KEY_PASSWORD        "wifi_pass"
 
 // ============================================================
 //  NTP CONFIGURATION
@@ -72,5 +78,47 @@
 #define API_KEY                 "esp32-cardiac-device-key-2026"
 #define API_TIMEOUT_MS          10000
 #define API_MAX_RETRIES         2
+
+// ============================================================
+//  BLE CONFIGURATION
+// ============================================================
+#define BLE_DEVICE_NAME         "CardiacMon"
+
+// WiFi Provisioning Service
+#define BLE_PROV_SERVICE_UUID   "0000FF00-1234-5678-9ABC-DEF012345678"
+#define BLE_PROV_SSID_UUID      "0000FF01-1234-5678-9ABC-DEF012345678"
+#define BLE_PROV_PASS_UUID      "0000FF02-1234-5678-9ABC-DEF012345678"
+#define BLE_PROV_CMD_UUID       "0000FF03-1234-5678-9ABC-DEF012345678"
+#define BLE_PROV_STATUS_UUID    "0000FF04-1234-5678-9ABC-DEF012345678"
+
+// Cardiac Monitor Service
+#define BLE_CARDIAC_SERVICE_UUID "0000CC00-1234-5678-9ABC-DEF012345678"
+#define BLE_CARDIAC_HR_UUID      "0000CC01-1234-5678-9ABC-DEF012345678"
+#define BLE_CARDIAC_SPO2_UUID    "0000CC02-1234-5678-9ABC-DEF012345678"
+#define BLE_CARDIAC_RISK_UUID    "0000CC03-1234-5678-9ABC-DEF012345678"
+#define BLE_CARDIAC_LABEL_UUID   "0000CC04-1234-5678-9ABC-DEF012345678"
+#define BLE_CARDIAC_STATUS_UUID  "0000CC05-1234-5678-9ABC-DEF012345678"
+
+// BLE Provisioning commands (written to CMD characteristic)
+#define BLE_CMD_CONNECT         0x01
+#define BLE_CMD_CLEAR_CREDS     0x02
+
+// BLE Provisioning status codes (read/notified from STATUS characteristic)
+#define BLE_STATUS_IDLE         0x00
+#define BLE_STATUS_CONNECTING   0x01
+#define BLE_STATUS_WIFI_OK      0x02
+#define BLE_STATUS_WIFI_FAIL    0x03
+#define BLE_STATUS_NTP_SYNC     0x04
+#define BLE_STATUS_READY        0x05
+#define BLE_STATUS_CLEARED      0x06
+
+// BLE Advertising intervals (in 0.625ms units per BLE spec)
+#define BLE_ADV_FAST_MIN        160     // 100ms (provisioning mode)
+#define BLE_ADV_FAST_MAX        240     // 150ms
+#define BLE_ADV_SLOW_MIN        1600    // 1000ms (operational mode)
+#define BLE_ADV_SLOW_MAX        1600    // 1000ms
+
+// BLE Vitals notification interval
+#define BLE_VITALS_NOTIFY_MS    1000
 
 #endif // CONFIG_H

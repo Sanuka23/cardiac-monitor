@@ -13,6 +13,11 @@ static uint32_t _lastReconnectAttemptMs = 0;
 static uint32_t _reconnectDelayMs = WIFI_RECONNECT_BASE_MS;
 static bool _ntpSynced = false;
 
+// Phase 4: Runtime credential buffers (set by BLE provisioner or main)
+static char _ssid[33] = {0};       // max 32 chars + null
+static char _password[64] = {0};   // max 63 chars + null
+static uint8_t _bootFailCount = 0;
+
 // --- Derive device ID from MAC address ---
 static void deriveDeviceId() {
 #if WIFI_MODE_ENABLED
@@ -55,6 +60,26 @@ static bool checkNtpSynced() {
     return false;
 }
 
+void wifiSetCredentials(const char* ssid, const char* password) {
+    strncpy(_ssid, ssid, sizeof(_ssid) - 1);
+    _ssid[sizeof(_ssid) - 1] = '\0';
+    strncpy(_password, password, sizeof(_password) - 1);
+    _password[sizeof(_password) - 1] = '\0';
+    Serial.printf("[WIFI] Credentials set for SSID: %s\n", _ssid);
+}
+
+bool wifiHasCredentials() {
+    return strlen(_ssid) > 0;
+}
+
+uint8_t wifiGetBootFailCount() {
+    return _bootFailCount;
+}
+
+void wifiResetBootFailCount() {
+    _bootFailCount = 0;
+}
+
 void wifiInit() {
     deriveDeviceId();
 
@@ -62,8 +87,13 @@ void wifiInit() {
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(false);
 
-    Serial.printf("[WIFI] Connecting to %s...\n", WIFI_SSID);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    if (strlen(_ssid) == 0) {
+        Serial.println("[WIFI] No credentials set, skipping connect.");
+        return;
+    }
+
+    Serial.printf("[WIFI] Connecting to %s...\n", _ssid);
+    WiFi.begin(_ssid, _password);
     _connectStartMs = millis();
     _state = WIFI_STATE_CONNECTING;
 #endif
@@ -79,12 +109,16 @@ WifiState wifiUpdate() {
                 Serial.printf("[WIFI] Connected! IP: %s, RSSI: %d dBm\n",
                     WiFi.localIP().toString().c_str(), WiFi.RSSI());
                 _reconnectDelayMs = WIFI_RECONNECT_BASE_MS;
+                _bootFailCount = 0;
                 startNtpSync();
             } else if (millis() - _connectStartMs > WIFI_CONNECT_TIMEOUT_MS) {
                 Serial.println("[WIFI] Connection timeout.");
                 WiFi.disconnect();
                 _state = WIFI_STATE_DISCONNECTED;
                 _lastReconnectAttemptMs = millis();
+                _bootFailCount++;
+                Serial.printf("[WIFI] Boot fail count: %u/%u\n",
+                    _bootFailCount, WIFI_BOOT_MAX_RETRIES);
             }
             break;
 
@@ -114,9 +148,11 @@ WifiState wifiUpdate() {
             break;
 
         case WIFI_STATE_DISCONNECTED:
+            if (strlen(_ssid) == 0) break;  // No credentials, don't try
             if (millis() - _lastReconnectAttemptMs >= _reconnectDelayMs) {
-                Serial.printf("[WIFI] Reconnecting (backoff %lums)...\n", _reconnectDelayMs);
-                WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+                Serial.printf("[WIFI] Reconnecting to %s (backoff %lums)...\n",
+                    _ssid, _reconnectDelayMs);
+                WiFi.begin(_ssid, _password);
                 _connectStartMs = millis();
                 _state = WIFI_STATE_CONNECTING;
                 _reconnectDelayMs = min(_reconnectDelayMs * 2, (uint32_t)WIFI_RECONNECT_MAX_MS);

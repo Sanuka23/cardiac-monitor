@@ -20,4 +20,10 @@ time_t      wifiGetTimestamp();
 int         wifiGetRSSI();
 void        wifiReconnect();
 
+// Phase 4: Runtime credential management
+void        wifiSetCredentials(const char* ssid, const char* password);
+bool        wifiHasCredentials();
+uint8_t     wifiGetBootFailCount();
+void        wifiResetBootFailCount();
+
 #endif // WIFI_MANAGER_H
