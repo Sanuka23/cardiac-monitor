@@ -71,26 +71,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProv = context.watch<ThemeProvider>();
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
             Text(
               'Settings',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
                 color: AppTheme.textPrimary(context),
               ),
-            ).animate().fadeIn(duration: 300.ms),
-            const SizedBox(height: 24),
+            ).animate().fadeIn(duration: 400.ms),
+            const SizedBox(height: 28),
 
             // ── Appearance ──
-            _sectionHeader('Appearance', PhosphorIconsLight.paintBrush, const Color(0xFF8B5CF6)),
-            const SizedBox(height: 10),
+            _sectionTitle('Appearance', PhosphorIconsBold.paintBrush,
+                const Color(0xFF8B5CF6)),
+            const SizedBox(height: 12),
             _card(
+              isLight: isLight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -98,29 +101,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(
                           color: AppTheme.textSecondary(context),
                           fontSize: 12,
-                          fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 12),
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
-                      _themeOption(
+                      _themeChip(
                         label: 'Light',
-                        icon: PhosphorIconsLight.sun,
+                        icon: PhosphorIconsBold.sun,
                         mode: ThemeMode.light,
                         prov: themeProv,
                         color: const Color(0xFFF59E0B),
                       ),
                       const SizedBox(width: 10),
-                      _themeOption(
+                      _themeChip(
                         label: 'Dark',
-                        icon: PhosphorIconsLight.moon,
+                        icon: PhosphorIconsBold.moon,
                         mode: ThemeMode.dark,
                         prov: themeProv,
-                        color: const Color(0xFF6366F1),
+                        color: const Color(0xFF667EEA),
                       ),
                       const SizedBox(width: 10),
-                      _themeOption(
+                      _themeChip(
                         label: 'Auto',
-                        icon: PhosphorIconsLight.circleHalf,
+                        icon: PhosphorIconsBold.circleHalf,
                         mode: ThemeMode.system,
                         prov: themeProv,
                         color: AppTheme.accent(context),
@@ -129,13 +132,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 300.ms, delay: 30.ms).slideY(begin: 0.05),
-            const SizedBox(height: 20),
+            ).animate().fadeIn(duration: 400.ms, delay: 50.ms).slideY(begin: 0.06),
+            const SizedBox(height: 24),
 
             // ── Connection ──
-            _sectionHeader('Connection', PhosphorIconsLight.globe, const Color(0xFF3B82F6)),
-            const SizedBox(height: 10),
+            _sectionTitle('Connection', PhosphorIconsBold.globe,
+                const Color(0xFF3B82F6)),
+            const SizedBox(height: 12),
             _card(
+              isLight: isLight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -143,7 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(
                           color: AppTheme.textSecondary(context),
                           fontSize: 12,
-                          fontWeight: FontWeight.w500)),
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -163,13 +168,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             filled: true,
                             fillColor: AppTheme.surfaceVariant(context),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide(
-                                  color: AppTheme.accent(context), width: 1.5),
+                                  color: AppTheme.accent(context),
+                                  width: 1.5),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 12),
@@ -179,18 +185,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(width: 10),
                       Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.accent(context),
-                          borderRadius: BorderRadius.circular(12),
+                          gradient: AppGradients.primary,
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: IconButton(
                           onPressed: _saveUrl,
-                          icon: const Icon(PhosphorIconsLight.checkCircle,
+                          icon: const Icon(PhosphorIconsBold.check,
                               color: Colors.white, size: 20),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Consumer<BleProvider>(
                     builder: (_, ble, _) {
                       final connected = ble.isConnected;
@@ -213,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               color: connected
                                   ? const Color(0xFF22C55E)
                                   : AppTheme.textSecondary(context),
-                              fontSize: 12,
+                              fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -223,7 +229,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onPressed: () => ble.disconnect(),
                               child: const Text('Disconnect',
                                   style: TextStyle(
-                                      color: Colors.red, fontSize: 12)),
+                                      color: Color(0xFFEF4444), fontSize: 12)),
                             ),
                         ],
                       );
@@ -231,42 +237,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 300.ms, delay: 50.ms).slideY(begin: 0.05),
-            const SizedBox(height: 20),
+            ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.06),
+            const SizedBox(height: 24),
 
             // ── Devices ──
-            _sectionHeader('Devices', PhosphorIconsLight.cpu, const Color(0xFF0D9488)),
-            const SizedBox(height: 10),
+            _sectionTitle('Devices', PhosphorIconsBold.cpu,
+                const Color(0xFF0D9488)),
+            const SizedBox(height: 12),
             _card(
+              isLight: isLight,
               child: Column(
                 children: [
                   if (_loadingDevices)
                     Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       child: CircularProgressIndicator(
                           color: AppTheme.accent(context), strokeWidth: 2),
                     )
                   else if (_devices.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppTheme.accent(context)
-                                  .withValues(alpha: 0.1),
+                              gradient: AppGradients.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(PhosphorIconsLight.cpu,
-                                size: 28,
-                                color: AppTheme.accent(context)),
+                            child: const Icon(PhosphorIconsLight.cpu,
+                                size: 28, color: Colors.white),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text('No devices registered',
                               style: TextStyle(
                                   color: AppTheme.textSecondary(context),
-                                  fontSize: 13)),
+                                  fontSize: 14)),
                         ],
                       ),
                     )
@@ -276,19 +282,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       return Container(
                         margin: EdgeInsets.only(
                             bottom: i < _devices.length - 1 ? 10 : 0),
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceVariant(context),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: AppTheme.accent(context)
                                     .withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(PhosphorIconsLight.cpu,
                                   color: AppTheme.accent(context), size: 18),
@@ -302,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       style: TextStyle(
                                         color: AppTheme.textPrimary(context),
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 13,
+                                        fontSize: 14,
                                       )),
                                   if (d.registeredAt != null)
                                     Text(
@@ -317,16 +323,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF22C55E)
                                     .withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text('Active',
                                   style: TextStyle(
                                     color: Color(0xFF22C55E),
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   )),
                             ),
@@ -334,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       );
                     }),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -349,28 +355,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             color: AppTheme.accent(context)
                                 .withValues(alpha: 0.3)),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                            borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 300.ms, delay: 100.ms).slideY(begin: 0.05),
-            const SizedBox(height: 20),
+            ).animate().fadeIn(duration: 400.ms, delay: 150.ms).slideY(begin: 0.06),
+            const SizedBox(height: 24),
 
             // ── Account ──
-            _sectionHeader('Account', PhosphorIconsLight.user, const Color(0xFFEF4444)),
-            const SizedBox(height: 10),
+            _sectionTitle('Account', PhosphorIconsBold.user,
+                const Color(0xFFEF4444)),
+            const SizedBox(height: 12),
             _card(
+              isLight: isLight,
               child: Column(
                 children: [
                   Consumer<AuthProvider>(
                     builder: (_, auth, _) => Row(
                       children: [
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: AppGradients.primary,
@@ -380,7 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               (auth.user?.name ?? 'U')[0].toUpperCase(),
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -394,13 +402,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Text(auth.user?.name ?? 'User',
                                   style: TextStyle(
                                     color: AppTheme.textPrimary(context),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
                                   )),
                               Text(auth.user?.email ?? '',
                                   style: TextStyle(
                                     color: AppTheme.textSecondary(context),
-                                    fontSize: 12,
+                                    fontSize: 13,
                                   )),
                             ],
                           ),
@@ -408,29 +416,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: _logout,
-                      icon: const Icon(PhosphorIconsLight.signOut,
+                      icon: const Icon(PhosphorIconsBold.signOut,
                           size: 18, color: Colors.white),
                       label: const Text('Logout',
-                          style: TextStyle(color: Colors.white)),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[600],
+                        backgroundColor: const Color(0xFFEF4444),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 300.ms, delay: 150.ms).slideY(begin: 0.05),
+            ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.06),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             Center(
               child: Text('Cardiac Monitor v1.1.0',
                   style: TextStyle(
@@ -442,21 +452,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _sectionHeader(String text, IconData icon, Color color) {
+  Widget _sectionTitle(String text, IconData icon, Color color) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 14, color: color),
+          child: Icon(icon, size: 16, color: color),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Text(text,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary(context),
             )),
@@ -464,29 +474,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _card({required Widget child}) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
+  Widget _card({required Widget child, required bool isLight}) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.cardBackground(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.dividerColor(context)),
-        boxShadow: isLight
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: isLight
+                ? Colors.black.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: child,
     );
   }
 
-  Widget _themeOption({
+  Widget _themeChip({
     required String label,
     required IconData icon,
     required ThemeMode mode,
@@ -499,25 +507,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: () => prov.setMode(mode),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             color: selected
-                ? color.withValues(alpha: 0.12)
+                ? color.withValues(alpha: 0.15)
                 : AppTheme.surfaceVariant(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: selected ? color : AppTheme.dividerColor(context),
-              width: selected ? 1.5 : 1,
+              width: selected ? 2 : 1,
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 20, color: selected ? color : AppTheme.textSecondary(context)),
-              const SizedBox(height: 4),
+              Icon(icon,
+                  size: 22,
+                  color: selected
+                      ? color
+                      : AppTheme.textSecondary(context)),
+              const SizedBox(height: 6),
               Text(label,
                   style: TextStyle(
-                    color: selected ? color : AppTheme.textSecondary(context),
-                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? color
+                        : AppTheme.textSecondary(context),
+                    fontWeight: FontWeight.w700,
                     fontSize: 11,
                   )),
             ],
