@@ -4,8 +4,14 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../config/constants.dart';
 import '../models/ble_vitals.dart';
 
+/// BLE connection states exposed to the UI layer.
 enum BleConnectionState { disconnected, scanning, connecting, connected }
 
+/// Manages BLE communication with the ESP32 Cardiac Monitor device.
+///
+/// Handles scanning for devices advertising "CardiacMon", connecting,
+/// WiFi provisioning via the provisioning GATT service, and streaming
+/// real-time vitals (HR, SpO2, risk) via the cardiac GATT service.
 class BleService {
   BluetoothDevice? _device;
   final _vitalsController = StreamController<BleVitals>.broadcast();

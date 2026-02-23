@@ -7,6 +7,11 @@ import '../models/prediction.dart';
 import 'auth_storage.dart';
 import 'settings_service.dart';
 
+/// HTTP client for the Cardiac Monitor backend API.
+///
+/// Wraps Dio with automatic JWT injection via [_JwtInterceptor].
+/// Base URL is resolved dynamically from [SettingsService] so users
+/// can change the server endpoint at runtime.
 class ApiService {
   late Dio _dio;
   final AuthStorage _authStorage;
@@ -26,8 +31,7 @@ class ApiService {
     // Called after settings change — Dio uses _baseUrl dynamically
   }
 
-  // --- Auth ---
-
+  /// Register a new user account and return JWT tokens.
   Future<TokenResponse> register(
       String email, String password, String name) async {
     final resp = await _dio.post('$_baseUrl${ApiPaths.register}', data: {
@@ -38,6 +42,7 @@ class ApiService {
     return TokenResponse.fromJson(resp.data);
   }
 
+  /// Authenticate with email/password and return JWT tokens.
   Future<TokenResponse> login(String email, String password) async {
     final resp = await _dio.post(
       '$_baseUrl${ApiPaths.login}',
@@ -50,6 +55,7 @@ class ApiService {
     return TokenResponse.fromJson(resp.data);
   }
 
+  /// Fetch the currently authenticated user profile.
   Future<User> getMe() async {
     final resp = await _dio.get('$_baseUrl${ApiPaths.me}');
     return User.fromJson(resp.data);
@@ -63,8 +69,7 @@ class ApiService {
     return User.fromJson(resp.data);
   }
 
-  // --- Devices ---
-
+  /// Register an ESP32 device to the current user's account.
   Future<Device> registerDevice(String deviceId) async {
     final resp = await _dio.post(
       '$_baseUrl${ApiPaths.devicesRegister}',
@@ -79,8 +84,7 @@ class ApiService {
     return list.map((d) => Device.fromJson(d)).toList();
   }
 
-  // --- Vitals ---
-
+  /// Get the most recent vitals reading for a device. Returns null if none.
   Future<Vitals?> getLatestVitals(String deviceId) async {
     try {
       final resp =
@@ -102,8 +106,7 @@ class ApiService {
     return list.map((v) => Vitals.fromJson(v)).toList();
   }
 
-  // --- Predictions ---
-
+  /// Get the most recent ML prediction for a device. Returns null if none.
   Future<Prediction?> getLatestPrediction(String deviceId) async {
     try {
       final resp =
