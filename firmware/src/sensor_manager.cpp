@@ -1,6 +1,12 @@
 #include "sensor_manager.h"
 #include <Wire.h>
 #include "MAX30100_PulseOximeter.h"
+#include "ecg_filter.h"
+
+// --- ECG digital filters ---
+static EcgNotch50   _ecgNotch;
+static EcgLowPass   _ecgLpf;
+static EcgDCRemover _ecgDcRemover;
 
 // --- Internal state ---
 static PulseOximeter pox;
@@ -109,14 +115,34 @@ void sensorUpdate() {
 
     uint32_t now = millis();
 
-    // --- ECG sampling at 100Hz ---
+    // --- ECG sampling at 250Hz ---
     if (now - _tsLastEcgSample >= ECG_SAMPLE_PERIOD_MS) {
         _tsLastEcgSample = now;
 
         _ecgLeadOff = (digitalRead(PIN_ECG_LO_PLUS) == HIGH)
                     || (digitalRead(PIN_ECG_LO_MINUS) == HIGH);
 
-        _lastEcgValue = _ecgLeadOff ? 0 : analogRead(PIN_ECG_OUTPUT);
+        if (_ecgLeadOff) {
+            _lastEcgValue = 0;
+            _ecgNotch.reset();
+            _ecgLpf.reset();
+            _ecgDcRemover.reset();
+        } else {
+            // 4x ADC oversampling for ~6dB noise reduction
+            uint32_t sum = 0;
+            for (int i = 0; i < ECG_OVERSAMPLE_COUNT; i++) {
+                sum += analogRead(PIN_ECG_OUTPUT);
+            }
+            float raw = (float)sum / ECG_OVERSAMPLE_COUNT;
+
+            // Filter chain: 50Hz notch -> 40Hz LPF -> DC removal
+            float notched  = _ecgNotch.step(raw);
+            float smoothed = _ecgLpf.step(notched);
+            float centered = _ecgDcRemover.step(smoothed);
+
+            // Re-center at 2048 (mid-range for 12-bit ADC) and clamp
+            _lastEcgValue = constrain((int)(centered + 2048.0f), 0, 4095);
+        }
 
         // Fill buffer if window is still collecting
         if (!_windowReady && _ecgIndex < ECG_SAMPLES_PER_WINDOW) {
@@ -196,6 +222,9 @@ bool sensorGetWindow(SensorWindow& window) {
     _beatIndex = 0;
     _windowStartMs = millis();
     _windowReady = false;
+    _ecgNotch.reset();
+    _ecgLpf.reset();
+    _ecgDcRemover.reset();
 
     return true;
 }
