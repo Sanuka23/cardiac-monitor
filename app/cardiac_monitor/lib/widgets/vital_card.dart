@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
-import '../config/theme.dart';
 import 'animated_value.dart';
 
 class VitalCard extends StatelessWidget {
@@ -8,10 +6,9 @@ class VitalCard extends StatelessWidget {
   final String value;
   final String unit;
   final IconData icon;
-  final Color color;
-  final LinearGradient? gradient;
-  final double? normalizedValue;
+  final LinearGradient gradient;
   final String? statusLabel;
+  final double progress;
 
   const VitalCard({
     super.key,
@@ -19,136 +16,116 @@ class VitalCard extends StatelessWidget {
     required this.value,
     required this.unit,
     required this.icon,
-    required this.color,
-    this.gradient,
-    this.normalizedValue,
+    required this.gradient,
     this.statusLabel,
+    this.progress = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final numericValue = double.tryParse(value) ?? 0;
     final hasDecimals = value.contains('.');
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final percent = (normalizedValue ?? 0).clamp(0.0, 1.0);
     final hasData = value != '--';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isLight
-            ? color.withValues(alpha: 0.08)
-            : color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: isLight ? 0.12 : 0.2),
-        ),
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon + Label
+          // Top row: icon + label + status
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 14),
-              ),
+              Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  label.toUpperCase(),
+                  label,
                   style: TextStyle(
-                    color: color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Circular progress + value
-          Center(
-            child: SizedBox(
-              width: 100,
-              height: 100,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularPercentIndicator(
-                    radius: 50,
-                    lineWidth: 8,
-                    percent: hasData ? percent : 0,
-                    animation: true,
-                    animationDuration: 800,
-                    animateFromLastPercent: true,
-                    circularStrokeCap: CircularStrokeCap.round,
-                    backgroundColor: color.withValues(alpha: 0.1),
-                    linearGradient: gradient ??
-                        LinearGradient(
-                          colors: [
-                            color.withValues(alpha: 0.7),
-                            color,
-                          ],
-                        ),
-                    center: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedValue(
-                          value: numericValue,
-                          decimals: hasDecimals ? 1 : 0,
-                          style: TextStyle(
-                            color: AppTheme.textPrimary(context),
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          unit,
-                          style: TextStyle(
-                            color: AppTheme.textSecondary(context),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+              if (statusLabel != null && statusLabel!.isNotEmpty)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    statusLabel!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Big number
+          Center(
+            child: hasData
+                ? AnimatedValue(
+                    value: numericValue,
+                    decimals: hasDecimals ? 1 : 0,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 44,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                    ),
+                  )
+                : const Text(
+                    '--',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 44,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              unit,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
+          const SizedBox(height: 18),
 
-          if (statusLabel != null && statusLabel!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  statusLabel!,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: hasData ? progress.clamp(0.0, 1.0) : 0,
+              minHeight: 6,
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
-          ],
+          ),
         ],
       ),
     );
