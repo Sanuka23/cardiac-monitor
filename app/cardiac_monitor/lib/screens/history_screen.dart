@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../providers/vitals_provider.dart';
@@ -53,7 +53,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Iconsax.chart, size: 48, color: AppTheme.textSecondary),
+                Icon(PhosphorIconsLight.chartLine, size: 48, color: AppTheme.textSecondary),
                 const SizedBox(height: 16),
                 const Text('No device registered',
                     style: TextStyle(color: AppTheme.textSecondary)),
@@ -150,7 +150,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.all(40),
                         child: Column(
                           children: [
-                            Icon(Iconsax.warning_2,
+                            Icon(PhosphorIconsLight.warning,
                                 size: 40, color: Colors.red[400]),
                             const SizedBox(height: 12),
                             Text(
@@ -165,7 +165,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     _chartSection(
                       title: 'Heart Rate',
                       unit: 'bpm',
-                      icon: Iconsax.heart,
+                      icon: PhosphorIconsLight.heartbeat,
                       gradient: AppGradients.hr,
                       child: VitalsLineChart(
                         title: '',
@@ -184,7 +184,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     _chartSection(
                       title: 'SpO2',
                       unit: '%',
-                      icon: Iconsax.drop,
+                      icon: PhosphorIconsLight.drop,
                       gradient: AppGradients.spo2,
                       child: VitalsLineChart(
                         title: '',
@@ -203,7 +203,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     _chartSection(
                       title: 'Risk Score',
                       unit: '',
-                      icon: Iconsax.shield_tick,
+                      icon: PhosphorIconsLight.shieldCheck,
                       gradient: AppGradients.risk,
                       child: VitalsLineChart(
                         title: '',

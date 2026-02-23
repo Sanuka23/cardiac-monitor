@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/ble_provider.dart';
@@ -115,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               hintText: 'https://your-api.com',
                               hintStyle: const TextStyle(
                                   color: AppTheme.textSecondary),
-                              prefixIcon: const Icon(Iconsax.global,
+                              prefixIcon: const Icon(PhosphorIconsLight.globe,
                                   size: 20, color: AppTheme.textSecondary),
                               filled: true,
                               fillColor:
@@ -142,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           child: IconButton(
                             onPressed: _saveUrl,
-                            icon: const Icon(Iconsax.tick_circle,
+                            icon: const Icon(PhosphorIconsLight.checkCircle,
                                 color: Colors.white, size: 22),
                           ),
                         ),
@@ -215,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Column(
                           children: [
-                            Icon(Iconsax.cpu,
+                            Icon(PhosphorIconsLight.cpu,
                                 size: 36, color: AppTheme.textSecondary),
                             const SizedBox(height: 8),
                             const Text(
@@ -250,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Iconsax.cpu,
+                                child: const Icon(PhosphorIconsLight.cpu,
                                     color: AppTheme.accent, size: 20),
                               ),
                               const SizedBox(width: 14),
@@ -304,7 +304,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () =>
                             Navigator.of(context).pushNamed('/device-setup'),
-                        icon: const Icon(Iconsax.add,
+                        icon: const Icon(PhosphorIconsLight.plus,
                             size: 18, color: AppTheme.accent),
                         label: const Text('Add Device',
                             style: TextStyle(color: AppTheme.accent)),
@@ -340,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               color: AppTheme.accent.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Iconsax.user,
+                            child: const Icon(PhosphorIconsLight.user,
                                 color: AppTheme.accent, size: 22),
                           ),
                           const SizedBox(width: 14),
@@ -374,7 +374,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _logout,
-                        icon: const Icon(Iconsax.logout,
+                        icon: const Icon(PhosphorIconsLight.signOut,
                             size: 18, color: Colors.white),
                         label: const Text('Logout',
                             style: TextStyle(color: Colors.white)),

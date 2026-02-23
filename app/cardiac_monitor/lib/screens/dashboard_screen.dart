@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/ble_provider.dart';
 import '../providers/auth_provider.dart';
@@ -75,7 +75,7 @@ class DashboardScreen extends StatelessWidget {
                             ? v.heartRate.toStringAsFixed(1)
                             : '--',
                         unit: 'bpm',
-                        icon: Iconsax.heart,
+                        icon: PhosphorIconsLight.heartbeat,
                         color: AppTheme.hrColor(v.heartRate),
                         gradient: AppGradients.hr,
                       )
@@ -89,7 +89,7 @@ class DashboardScreen extends StatelessWidget {
                         label: 'SpO2',
                         value: v.spo2 > 0 ? '${v.spo2}' : '--',
                         unit: '%',
-                        icon: Iconsax.drop,
+                        icon: PhosphorIconsLight.drop,
                         color: AppTheme.spo2Color(v.spo2),
                         gradient: AppGradients.spo2,
                       )
@@ -116,7 +116,7 @@ class DashboardScreen extends StatelessWidget {
                                   const Color(0xFFFF9800).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Iconsax.shield_tick,
+                            child: const Icon(PhosphorIconsLight.shieldCheck,
                                 color: Color(0xFFFF9800), size: 18),
                           ),
                           const SizedBox(width: 10),
@@ -182,14 +182,14 @@ class DashboardScreen extends StatelessWidget {
                       const SizedBox(height: 14),
                       Row(
                         children: [
-                          _statusChip('Sensor', v.sensorOk, Iconsax.cpu),
+                          _statusChip('Sensor', v.sensorOk, PhosphorIconsLight.cpu),
                           const SizedBox(width: 8),
-                          _statusChip('WiFi', v.wifiReady, Iconsax.wifi),
+                          _statusChip('WiFi', v.wifiReady, PhosphorIconsLight.wifiHigh),
                           const SizedBox(width: 8),
                           _statusChip(
-                              'ECG', !v.ecgLeadOff, Iconsax.activity),
+                              'ECG', !v.ecgLeadOff, PhosphorIconsLight.pulse),
                           const SizedBox(width: 8),
-                          _statusChip('API', v.apiReady, Iconsax.cloud),
+                          _statusChip('API', v.apiReady, PhosphorIconsLight.cloud),
                         ],
                       ),
                     ],
@@ -214,7 +214,7 @@ class DashboardScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.of(context).pushNamed('/device-setup');
                           },
-                          icon: const Icon(Iconsax.bluetooth,
+                          icon: const Icon(PhosphorIconsLight.bluetooth,
                               color: Colors.white),
                           label: const Text(
                             'Connect Device',

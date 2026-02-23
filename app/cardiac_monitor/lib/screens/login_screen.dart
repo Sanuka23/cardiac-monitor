@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     child: const Icon(
-                      Iconsax.heart,
+                      PhosphorIconsLight.heartbeat,
                       size: 48,
                       color: AppTheme.accent,
                     ),
@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: _buildField(
                                     controller: _nameC,
                                     hint: 'Full name',
-                                    icon: Iconsax.user,
+                                    icon: PhosphorIconsLight.user,
                                     validator: (v) =>
                                         (v == null || v.trim().isEmpty)
                                             ? 'Name required'
@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               _buildField(
                                 controller: _emailC,
                                 hint: 'Email address',
-                                icon: Iconsax.sms,
+                                icon: PhosphorIconsLight.envelope,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (v) =>
                                     (v == null || !v.contains('@'))
@@ -178,13 +178,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               _buildField(
                                 controller: _passwordC,
                                 hint: 'Password',
-                                icon: Iconsax.lock,
+                                icon: PhosphorIconsLight.lock,
                                 obscure: _obscure,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscure
-                                        ? Iconsax.eye_slash
-                                        : Iconsax.eye,
+                                        ? PhosphorIconsLight.eyeSlash
+                                        : PhosphorIconsLight.eye,
                                     size: 20,
                                     color: AppTheme.textSecondary,
                                   ),

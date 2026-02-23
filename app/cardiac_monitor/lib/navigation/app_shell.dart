@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../config/theme.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/history_screen.dart';
@@ -46,23 +46,23 @@ class _AppShellState extends State<AppShell> {
           height: 70,
           destinations: const [
             NavigationDestination(
-              icon: Icon(Iconsax.heart, color: AppTheme.textSecondary),
-              selectedIcon: Icon(Iconsax.heart, color: AppTheme.accent),
+              icon: Icon(PhosphorIconsLight.heartbeat, color: AppTheme.textSecondary),
+              selectedIcon: Icon(PhosphorIconsLight.heartbeat, color: AppTheme.accent),
               label: 'Monitor',
             ),
             NavigationDestination(
-              icon: Icon(Iconsax.chart, color: AppTheme.textSecondary),
-              selectedIcon: Icon(Iconsax.chart, color: AppTheme.accent),
+              icon: Icon(PhosphorIconsLight.chartLine, color: AppTheme.textSecondary),
+              selectedIcon: Icon(PhosphorIconsLight.chartLine, color: AppTheme.accent),
               label: 'History',
             ),
             NavigationDestination(
-              icon: Icon(Iconsax.user, color: AppTheme.textSecondary),
-              selectedIcon: Icon(Iconsax.user, color: AppTheme.accent),
+              icon: Icon(PhosphorIconsLight.user, color: AppTheme.textSecondary),
+              selectedIcon: Icon(PhosphorIconsLight.user, color: AppTheme.accent),
               label: 'Profile',
             ),
             NavigationDestination(
-              icon: Icon(Iconsax.setting_2, color: AppTheme.textSecondary),
-              selectedIcon: Icon(Iconsax.setting_2, color: AppTheme.accent),
+              icon: Icon(PhosphorIconsLight.gear, color: AppTheme.textSecondary),
+              selectedIcon: Icon(PhosphorIconsLight.gear, color: AppTheme.accent),
               label: 'Settings',
             ),
           ],

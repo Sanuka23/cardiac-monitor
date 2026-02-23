@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
@@ -176,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: const TextStyle(
                                   color: AppTheme.textPrimary),
                               decoration:
-                                  _fieldDecor('Age', Iconsax.calendar),
+                                  _fieldDecor('Age', PhosphorIconsLight.calendar),
                             ),
                           ),
                         ],
@@ -206,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: const TextStyle(
                                   color: AppTheme.textPrimary),
                               decoration:
-                                  _fieldDecor('Height (cm)', Iconsax.ruler),
+                                  _fieldDecor('Height (cm)', PhosphorIconsLight.ruler),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -217,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: const TextStyle(
                                   color: AppTheme.textPrimary),
                               decoration:
-                                  _fieldDecor('Weight (kg)', Iconsax.weight),
+                                  _fieldDecor('Weight (kg)', PhosphorIconsLight.scales),
                             ),
                           ),
                         ],
@@ -237,18 +237,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       horizontal: 8, vertical: 4),
                   child: Column(
                     children: [
-                      _toggle('Diabetic', Iconsax.health, _diabetic,
+                      _toggle('Diabetic', PhosphorIconsLight.stethoscope, _diabetic,
                           (v) => setState(() => _diabetic = v)),
                       _divider(),
-                      _toggle('Hypertensive', Iconsax.heart, _hypertensive,
+                      _toggle('Hypertensive', PhosphorIconsLight.heartbeat, _hypertensive,
                           (v) => setState(() => _hypertensive = v)),
                       _divider(),
-                      _toggle('Smoker', Iconsax.forbidden_2, _smoker,
+                      _toggle('Smoker', PhosphorIconsLight.prohibit, _smoker,
                           (v) => setState(() => _smoker = v)),
                       _divider(),
                       _toggle(
                           'Family History',
-                          Iconsax.people,
+                          PhosphorIconsLight.users,
                           _familyHistory,
                           (v) => setState(() => _familyHistory = v)),
                     ],
@@ -271,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const TextStyle(color: AppTheme.textPrimary),
                         decoration: _fieldDecor(
                             'Known conditions (comma separated)',
-                            Iconsax.document_text),
+                            PhosphorIconsLight.fileText),
                         maxLines: 2,
                       ),
                       const SizedBox(height: 14),
@@ -281,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const TextStyle(color: AppTheme.textPrimary),
                         decoration: _fieldDecor(
                             'Medications (comma separated)',
-                            Iconsax.firstline),
+                            PhosphorIconsLight.pill),
                         maxLines: 2,
                       ),
                     ],

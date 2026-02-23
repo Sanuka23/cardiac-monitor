@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/ble_provider.dart';
@@ -125,7 +125,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Iconsax.arrow_left,
+                      icon: const Icon(PhosphorIconsLight.arrowLeft,
                           color: AppTheme.textPrimary),
                     ),
                     const Expanded(
@@ -279,7 +279,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                   ? null
                   : _startScan,
               icon: Icon(
-                Iconsax.bluetooth,
+                PhosphorIconsLight.bluetooth,
                 color: ble.connectionState == BleConnectionState.scanning
                     ? Colors.white54
                     : Colors.white,
@@ -333,7 +333,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                             color: AppTheme.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Iconsax.bluetooth,
+                          child: const Icon(PhosphorIconsLight.bluetooth,
                               color: AppTheme.accent, size: 22),
                         ),
                         const SizedBox(width: 14),
@@ -376,7 +376,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                           }),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Iconsax.arrow_right_3,
+                        const Icon(PhosphorIconsLight.arrowRight,
                             color: AppTheme.textSecondary, size: 18),
                       ],
                     ),
@@ -421,7 +421,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                     hintText: 'WiFi Network Name (SSID)',
                     hintStyle:
                         const TextStyle(color: AppTheme.textSecondary),
-                    prefixIcon: const Icon(Iconsax.wifi,
+                    prefixIcon: const Icon(PhosphorIconsLight.wifiHigh,
                         color: AppTheme.textSecondary),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.04),
@@ -445,7 +445,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                     hintText: 'WiFi Password',
                     hintStyle:
                         const TextStyle(color: AppTheme.textSecondary),
-                    prefixIcon: const Icon(Iconsax.lock,
+                    prefixIcon: const Icon(PhosphorIconsLight.lock,
                         color: AppTheme.textSecondary),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.04),
@@ -531,7 +531,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                   shape: BoxShape.circle,
                   color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
                 ),
-                child: const Icon(Iconsax.tick_circle,
+                child: const Icon(PhosphorIconsLight.checkCircle,
                     color: Color(0xFF4CAF50), size: 56),
               ),
             if (isFailed)
@@ -541,7 +541,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                   shape: BoxShape.circle,
                   color: Colors.red.withValues(alpha: 0.12),
                 ),
-                child: const Icon(Iconsax.close_circle,
+                child: const Icon(PhosphorIconsLight.xCircle,
                     color: Colors.red, size: 56),
               ),
             const SizedBox(height: 24),
@@ -577,7 +577,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
                         hintText: 'Device ID (e.g. ESP32_AABBCC)',
                         hintStyle: const TextStyle(
                             color: AppTheme.textSecondary),
-                        prefixIcon: const Icon(Iconsax.cpu,
+                        prefixIcon: const Icon(PhosphorIconsLight.cpu,
                             color: AppTheme.textSecondary),
                         filled: true,
                         fillColor: Colors.white.withValues(alpha: 0.04),
