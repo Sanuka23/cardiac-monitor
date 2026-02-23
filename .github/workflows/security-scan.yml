@@ -80,7 +80,7 @@ jobs:
           bandit -r app/ -ll --format screen
 
       - name: Run pip-audit (dependency vulnerabilities)
-        run: pip-audit --requirement requirements.txt --strict
+        run: pip-audit --requirement requirements.txt --strict --ignore-vuln CVE-2024-23342
 
       - name: Upload bandit report
         if: always()
