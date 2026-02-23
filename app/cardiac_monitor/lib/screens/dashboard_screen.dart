@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/ble_provider.dart';
 import '../providers/auth_provider.dart';
@@ -6,6 +8,7 @@ import '../config/theme.dart';
 import '../widgets/vital_card.dart';
 import '../widgets/risk_indicator.dart';
 import '../widgets/ble_status_chip.dart';
+import '../widgets/glass_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -18,168 +21,255 @@ class DashboardScreen extends StatelessWidget {
     final connected = ble.isConnected;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: BleStatusChip(state: ble.connectionState),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Greeting
-            Text(
-              'Hello, ${auth.user?.name ?? 'User'}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              connected ? 'Live monitoring active' : 'Connect device to begin',
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
-            ),
-            const SizedBox(height: 24),
-
-            // HR + SpO2 cards
-            Row(
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppGradients.background),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: VitalCard(
-                    label: 'Heart Rate',
-                    value: v.heartRate > 0
-                        ? v.heartRate.toStringAsFixed(1)
-                        : '--.-',
-                    unit: 'bpm',
-                    icon: Icons.favorite,
-                    color: AppTheme.hrColor(v.heartRate),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: VitalCard(
-                    label: 'SpO2',
-                    value: v.spo2 > 0 ? '${v.spo2}' : '--',
-                    unit: '%',
-                    icon: Icons.water_drop,
-                    color: AppTheme.spo2Color(v.spo2),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Risk assessment
-            Card(
-              color: const Color(0xFF161B22),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
+                // Header row
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.shield_outlined,
-                            color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Risk Assessment',
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hello, ${auth.user?.name ?? 'User'}',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    RiskIndicator(
-                      score: v.riskScore,
-                      label: v.riskLabel,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Device status chips
-            Card(
-              color: const Color(0xFF161B22),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Device Status',
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                          const SizedBox(height: 4),
+                          Text(
+                            connected
+                                ? 'Live monitoring active'
+                                : 'Connect device to begin',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _statusChip('Sensor', v.sensorOk, Icons.sensors),
-                        _statusChip('WiFi', v.wifiReady, Icons.wifi),
-                        _statusChip(
-                          'ECG Leads',
-                          !v.ecgLeadOff,
-                          Icons.cable,
-                        ),
-                        _statusChip('API', v.apiReady, Icons.cloud),
-                      ],
+                    BleStatusChip(state: ble.connectionState),
+                  ],
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .slideX(begin: -0.05),
+                const SizedBox(height: 24),
+
+                // HR + SpO2 cards
+                Row(
+                  children: [
+                    Expanded(
+                      child: VitalCard(
+                        label: 'Heart Rate',
+                        value: v.heartRate > 0
+                            ? v.heartRate.toStringAsFixed(1)
+                            : '--',
+                        unit: 'bpm',
+                        icon: Iconsax.heart,
+                        color: AppTheme.hrColor(v.heartRate),
+                        gradient: AppGradients.hr,
+                      )
+                          .animate()
+                          .fadeIn(duration: 500.ms, delay: 100.ms)
+                          .slideY(begin: 0.15),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: VitalCard(
+                        label: 'SpO2',
+                        value: v.spo2 > 0 ? '${v.spo2}' : '--',
+                        unit: '%',
+                        icon: Iconsax.drop,
+                        color: AppTheme.spo2Color(v.spo2),
+                        gradient: AppGradients.spo2,
+                      )
+                          .animate()
+                          .fadeIn(duration: 500.ms, delay: 200.ms)
+                          .slideY(begin: 0.15),
                     ),
                   ],
                 ),
-              ),
-            ),
+                const SizedBox(height: 14),
 
-            if (!connected) ...[
-              const SizedBox(height: 24),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/device-setup');
-                  },
-                  icon: const Icon(Icons.bluetooth_searching),
-                  label: const Text('Connect Device'),
-                ),
-              ),
-            ],
-          ],
+                // Risk assessment
+                GlassCard(
+                  topAccent: AppGradients.risk,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color:
+                                  const Color(0xFFFF9800).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Iconsax.shield_tick,
+                                color: Color(0xFFFF9800), size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'RISK ASSESSMENT',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (v.riskScore > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.riskColor(v.riskScore)
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${(v.riskScore * 100).round()}%',
+                                style: TextStyle(
+                                  color: AppTheme.riskColor(v.riskScore),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      RiskIndicator(
+                        score: v.riskScore,
+                        label: v.riskLabel,
+                        size: 150,
+                      ),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 300.ms)
+                    .slideY(begin: 0.15),
+                const SizedBox(height: 14),
+
+                // Device status
+                GlassCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DEVICE STATUS',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          _statusChip('Sensor', v.sensorOk, Iconsax.cpu),
+                          const SizedBox(width: 8),
+                          _statusChip('WiFi', v.wifiReady, Iconsax.wifi),
+                          const SizedBox(width: 8),
+                          _statusChip(
+                              'ECG', !v.ecgLeadOff, Iconsax.activity),
+                          const SizedBox(width: 8),
+                          _statusChip('API', v.apiReady, Iconsax.cloud),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 400.ms)
+                    .slideY(begin: 0.15),
+
+                if (!connected) ...[
+                  const SizedBox(height: 24),
+                  Center(
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: AppGradients.primary,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed('/device-setup');
+                          },
+                          icon: const Icon(Iconsax.bluetooth,
+                              color: Colors.white),
+                          label: const Text(
+                            'Connect Device',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 500.ms)
+                      .slideY(begin: 0.15),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _statusChip(String label, bool ok, IconData icon) {
-    final color = ok ? const Color(0xFF4CAF50) : Colors.grey[600]!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ],
+    final color = ok ? const Color(0xFF4CAF50) : AppTheme.textSecondary;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
