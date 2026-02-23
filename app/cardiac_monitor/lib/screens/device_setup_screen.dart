@@ -384,7 +384,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
           ),
         ),
       ],
-    ).animate().fadeIn(duration: 400.ms);
+    ).animate().fadeIn(duration: 300.ms);
   }
 
   Widget _buildWifiStep() {
@@ -490,7 +490,7 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms);
+    ).animate().fadeIn(duration: 300.ms);
   }
 
   Widget _buildProvisioningStep() {
@@ -631,6 +631,6 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms);
+    ).animate().fadeIn(duration: 300.ms);
   }
 }

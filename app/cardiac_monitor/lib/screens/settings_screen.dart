@@ -9,7 +9,6 @@ import '../services/api_service.dart';
 import '../services/settings_service.dart';
 import '../models/device.dart';
 import '../config/theme.dart';
-import '../widgets/glass_card.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -54,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SnackBar(
         content: const Text('API URL saved'),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF4CAF50),
+        backgroundColor: const Color(0xFF22C55E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -76,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
             Text(
               'Settings',
@@ -85,60 +84,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textPrimary(context),
               ),
-            ).animate().fadeIn(duration: 400.ms),
+            ).animate().fadeIn(duration: 300.ms),
             const SizedBox(height: 24),
 
-            // Appearance
-            _sectionLabel('APPEARANCE'),
+            // ── Appearance ──
+            _sectionHeader('Appearance', PhosphorIconsLight.paintBrush, const Color(0xFF8B5CF6)),
             const SizedBox(height: 10),
-            GlassCard(
-              padding: const EdgeInsets.all(18),
+            _card(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Theme',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary(context),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text('Theme',
+                      style: TextStyle(
+                          color: AppTheme.textSecondary(context),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      _themeChip('Light', ThemeMode.light, themeProv),
-                      const SizedBox(width: 8),
-                      _themeChip('Dark', ThemeMode.dark, themeProv),
-                      const SizedBox(width: 8),
-                      _themeChip('System', ThemeMode.system, themeProv),
+                      _themeOption(
+                        label: 'Light',
+                        icon: PhosphorIconsLight.sun,
+                        mode: ThemeMode.light,
+                        prov: themeProv,
+                        color: const Color(0xFFF59E0B),
+                      ),
+                      const SizedBox(width: 10),
+                      _themeOption(
+                        label: 'Dark',
+                        icon: PhosphorIconsLight.moon,
+                        mode: ThemeMode.dark,
+                        prov: themeProv,
+                        color: const Color(0xFF6366F1),
+                      ),
+                      const SizedBox(width: 10),
+                      _themeOption(
+                        label: 'Auto',
+                        icon: PhosphorIconsLight.circleHalf,
+                        mode: ThemeMode.system,
+                        prov: themeProv,
+                        color: AppTheme.accent(context),
+                      ),
                     ],
                   ),
                 ],
               ),
-            )
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 50.ms)
-                .slideY(begin: 0.1),
-
+            ).animate().fadeIn(duration: 300.ms, delay: 30.ms).slideY(begin: 0.05),
             const SizedBox(height: 20),
 
-            // Connection
-            _sectionLabel('CONNECTION'),
+            // ── Connection ──
+            _sectionHeader('Connection', PhosphorIconsLight.globe, const Color(0xFF3B82F6)),
             const SizedBox(height: 10),
-            GlassCard(
-              padding: const EdgeInsets.all(18),
+            _card(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'API Server URL',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary(context),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text('API Server URL',
+                      style: TextStyle(
+                          color: AppTheme.textSecondary(context),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -146,39 +151,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: TextField(
                           controller: _urlC,
                           style: TextStyle(
-                              color: AppTheme.textPrimary(context), fontSize: 14),
+                              color: AppTheme.textPrimary(context),
+                              fontSize: 14),
                           decoration: InputDecoration(
                             hintText: 'https://your-api.com',
                             hintStyle: TextStyle(
-                                color: AppTheme.textSecondary(context)),
+                                color: AppTheme.textTertiary(context)),
                             prefixIcon: Icon(PhosphorIconsLight.globe,
-                                size: 20, color: AppTheme.textSecondary(context)),
+                                size: 18,
+                                color: AppTheme.textSecondary(context)),
                             filled: true,
                             fillColor: AppTheme.surfaceVariant(context),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
                                   color: AppTheme.accent(context), width: 1.5),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
+                                horizontal: 14, vertical: 12),
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Container(
                         decoration: BoxDecoration(
-                          gradient: AppGradients.primary,
+                          color: AppTheme.accent(context),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
                           onPressed: _saveUrl,
                           icon: const Icon(PhosphorIconsLight.checkCircle,
-                              color: Colors.white, size: 22),
+                              color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -195,31 +202,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: connected
-                                  ? const Color(0xFF4CAF50)
-                                  : AppTheme.textSecondary(context),
+                                  ? const Color(0xFF22C55E)
+                                  : AppTheme.textTertiary(context),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            connected
-                                ? 'BLE Connected'
-                                : 'BLE Disconnected',
+                            connected ? 'BLE Connected' : 'BLE Disconnected',
                             style: TextStyle(
                               color: connected
-                                  ? const Color(0xFF4CAF50)
+                                  ? const Color(0xFF22C55E)
                                   : AppTheme.textSecondary(context),
                               fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           const Spacer(),
                           if (connected)
                             TextButton(
                               onPressed: () => ble.disconnect(),
-                              child: const Text(
-                                'Disconnect',
-                                style: TextStyle(
-                                    color: Colors.red, fontSize: 12),
-                              ),
+                              child: const Text('Disconnect',
+                                  style: TextStyle(
+                                      color: Colors.red, fontSize: 12)),
                             ),
                         ],
                       );
@@ -227,16 +231,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            )
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 100.ms)
-                .slideY(begin: 0.1),
-
+            ).animate().fadeIn(duration: 300.ms, delay: 50.ms).slideY(begin: 0.05),
             const SizedBox(height: 20),
-            _sectionLabel('DEVICES'),
+
+            // ── Devices ──
+            _sectionHeader('Devices', PhosphorIconsLight.cpu, const Color(0xFF0D9488)),
             const SizedBox(height: 10),
-            GlassCard(
-              padding: const EdgeInsets.all(18),
+            _card(
               child: Column(
                 children: [
                   if (_loadingDevices)
@@ -250,15 +251,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Column(
                         children: [
-                          Icon(PhosphorIconsLight.cpu,
-                              size: 36, color: AppTheme.textSecondary(context)),
-                          const SizedBox(height: 8),
-                          Text(
-                            'No devices registered',
-                            style: TextStyle(
-                                color: AppTheme.textSecondary(context),
-                                fontSize: 13),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent(context)
+                                  .withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(PhosphorIconsLight.cpu,
+                                size: 28,
+                                color: AppTheme.accent(context)),
                           ),
+                          const SizedBox(height: 8),
+                          Text('No devices registered',
+                              style: TextStyle(
+                                  color: AppTheme.textSecondary(context),
+                                  fontSize: 13)),
                         ],
                       ),
                     )
@@ -268,43 +276,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       return Container(
                         margin: EdgeInsets.only(
                             bottom: i < _devices.length - 1 ? 10 : 0),
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceVariant(context),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                              color: AppTheme.dividerColor(context)),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: AppTheme.accent(context)
                                     .withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(PhosphorIconsLight.cpu,
-                                  color: AppTheme.accent(context), size: 20),
+                                  color: AppTheme.accent(context), size: 18),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    d.deviceId,
-                                    style: TextStyle(
-                                      color: AppTheme.textPrimary(context),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  Text(d.deviceId,
+                                      style: TextStyle(
+                                        color: AppTheme.textPrimary(context),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      )),
                                   if (d.registeredAt != null)
                                     Text(
                                       'Registered ${d.registeredAt!.toLocal().toString().substring(0, 10)}',
                                       style: TextStyle(
-                                        color: AppTheme.textSecondary(context),
+                                        color: AppTheme.textTertiary(context),
                                         fontSize: 11,
                                       ),
                                     ),
@@ -315,18 +319,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF4CAF50)
+                                color: const Color(0xFF22C55E)
                                     .withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                'Active',
-                                style: TextStyle(
-                                  color: Color(0xFF4CAF50),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              child: const Text('Active',
+                                  style: TextStyle(
+                                    color: Color(0xFF22C55E),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  )),
                             ),
                           ],
                         ),
@@ -339,64 +341,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onPressed: () =>
                           Navigator.of(context).pushNamed('/device-setup'),
                       icon: Icon(PhosphorIconsLight.plus,
-                          size: 18, color: AppTheme.accent(context)),
+                          size: 16, color: AppTheme.accent(context)),
                       label: Text('Add Device',
                           style: TextStyle(color: AppTheme.accent(context))),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(
-                            color: AppTheme.accent(context).withValues(alpha: 0.3)),
+                            color: AppTheme.accent(context)
+                                .withValues(alpha: 0.3)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
                 ],
               ),
-            )
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 200.ms)
-                .slideY(begin: 0.1),
-
+            ).animate().fadeIn(duration: 300.ms, delay: 100.ms).slideY(begin: 0.05),
             const SizedBox(height: 20),
-            _sectionLabel('ACCOUNT'),
+
+            // ── Account ──
+            _sectionHeader('Account', PhosphorIconsLight.user, const Color(0xFFEF4444)),
             const SizedBox(height: 10),
-            GlassCard(
-              padding: const EdgeInsets.all(18),
+            _card(
               child: Column(
                 children: [
                   Consumer<AuthProvider>(
                     builder: (_, auth, _) => Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: AppTheme.accent(context).withValues(alpha: 0.12),
                             shape: BoxShape.circle,
+                            gradient: AppGradients.primary,
                           ),
-                          child: Icon(PhosphorIconsLight.user,
-                              color: AppTheme.accent(context), size: 22),
+                          child: Center(
+                            child: Text(
+                              (auth.user?.name ?? 'U')[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                auth.user?.name ?? 'User',
-                                style: TextStyle(
-                                  color: AppTheme.textPrimary(context),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Text(
-                                auth.user?.email ?? '',
-                                style: TextStyle(
-                                  color: AppTheme.textSecondary(context),
-                                  fontSize: 12,
-                                ),
-                              ),
+                              Text(auth.user?.name ?? 'User',
+                                  style: TextStyle(
+                                    color: AppTheme.textPrimary(context),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  )),
+                              Text(auth.user?.email ?? '',
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary(context),
+                                    fontSize: 12,
+                                  )),
                             ],
                           ),
                         ),
@@ -413,7 +418,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       label: const Text('Logout',
                           style: TextStyle(color: Colors.white)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[700],
+                        backgroundColor: Colors.red[600],
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -422,18 +428,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            )
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 300.ms)
-                .slideY(begin: 0.1),
+            ).animate().fadeIn(duration: 300.ms, delay: 150.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 24),
             Center(
-              child: Text(
-                'Cardiac Monitor v1.1.0',
-                style: TextStyle(
-                    color: AppTheme.textSecondary(context), fontSize: 12),
-              ),
+              child: Text('Cardiac Monitor v1.1.0',
+                  style: TextStyle(
+                      color: AppTheme.textTertiary(context), fontSize: 11)),
             ),
           ],
         ),
@@ -441,47 +442,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _themeChip(String label, ThemeMode mode, ThemeProvider prov) {
+  Widget _sectionHeader(String text, IconData icon, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 14, color: color),
+        ),
+        const SizedBox(width: 8),
+        Text(text,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary(context),
+            )),
+      ],
+    );
+  }
+
+  Widget _card({required Widget child}) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.dividerColor(context)),
+        boxShadow: isLight
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : [],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _themeOption({
+    required String label,
+    required IconData icon,
+    required ThemeMode mode,
+    required ThemeProvider prov,
+    required Color color,
+  }) {
     final selected = prov.mode == mode;
     return Expanded(
       child: GestureDetector(
         onTap: () => prov.setMode(mode),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            gradient: selected ? AppGradients.primary : null,
-            color: selected ? null : AppTheme.surfaceVariant(context),
-            borderRadius: BorderRadius.circular(10),
+            color: selected
+                ? color.withValues(alpha: 0.12)
+                : AppTheme.surfaceVariant(context),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected
-                  ? Colors.transparent
-                  : AppTheme.dividerColor(context),
+              color: selected ? color : AppTheme.dividerColor(context),
+              width: selected ? 1.5 : 1,
             ),
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : AppTheme.textSecondary(context),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
+          child: Column(
+            children: [
+              Icon(icon, size: 20, color: selected ? color : AppTheme.textSecondary(context)),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: TextStyle(
+                    color: selected ? color : AppTheme.textSecondary(context),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  )),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _sectionLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.accent(context),
-        letterSpacing: 1.2,
       ),
     );
   }

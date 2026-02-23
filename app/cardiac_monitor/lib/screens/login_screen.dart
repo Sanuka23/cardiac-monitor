@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 )
                     .animate()
-                    .fadeIn(duration: 600.ms)
+                    .fadeIn(duration: 300.ms)
                     .scale(begin: const Offset(0.8, 0.8)),
                 const SizedBox(height: 20),
                 Text(
@@ -109,8 +109,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 )
                     .animate()
-                    .fadeIn(duration: 600.ms, delay: 100.ms)
-                    .slideY(begin: 0.2),
+                    .fadeIn(duration: 300.ms, delay: 50.ms)
+                    .slideY(begin: 0.05),
                 const SizedBox(height: 6),
                 Text(
                   'Real-time heart health monitoring',
@@ -120,8 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 )
                     .animate()
-                    .fadeIn(duration: 600.ms, delay: 200.ms)
-                    .slideY(begin: 0.2),
+                    .fadeIn(duration: 300.ms, delay: 100.ms)
+                    .slideY(begin: 0.05),
                 const SizedBox(height: 36),
 
                 // Form card
@@ -239,8 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(duration: 600.ms, delay: 300.ms).slideY(
-                    begin: 0.15),
+                ).animate().fadeIn(duration: 300.ms, delay: 150.ms).slideY(begin: 0.05),
               ],
             ),
           ),

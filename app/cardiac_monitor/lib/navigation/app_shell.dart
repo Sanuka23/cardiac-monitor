@@ -25,46 +25,75 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppTheme.cardBackground(context),
-          border: Border(
-            top: BorderSide(
-              color: AppTheme.dividerColor(context),
-              width: 1,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isLight ? 0.06 : 0.2),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem(0, PhosphorIconsLight.heartbeat, PhosphorIconsBold.heartbeat, 'Monitor'),
+                _navItem(1, PhosphorIconsLight.chartLine, PhosphorIconsBold.chartLine, 'Trends'),
+                _navItem(2, PhosphorIconsLight.user, PhosphorIconsBold.user, 'Profile'),
+                _navItem(3, PhosphorIconsLight.gear, PhosphorIconsBold.gear, 'Settings'),
+              ],
             ),
           ),
         ),
-        child: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          backgroundColor: Colors.transparent,
-          indicatorColor: AppTheme.accent(context).withValues(alpha: 0.12),
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          height: 70,
-          destinations: [
-            NavigationDestination(
-              icon: Icon(PhosphorIconsLight.heartbeat, color: AppTheme.textSecondary(context)),
-              selectedIcon: Icon(PhosphorIconsLight.heartbeat, color: AppTheme.accent(context)),
-              label: 'Monitor',
+      ),
+    );
+  }
+
+  Widget _navItem(int index, IconData icon, IconData activeIcon, String label) {
+    final selected = _index == index;
+    final accent = AppTheme.accent(context);
+
+    return GestureDetector(
+      onTap: () => setState(() => _index = index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: selected ? 16 : 12,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: selected ? accent.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? activeIcon : icon,
+              size: 22,
+              color: selected ? accent : AppTheme.textTertiary(context),
             ),
-            NavigationDestination(
-              icon: Icon(PhosphorIconsLight.chartLine, color: AppTheme.textSecondary(context)),
-              selectedIcon: Icon(PhosphorIconsLight.chartLine, color: AppTheme.accent(context)),
-              label: 'History',
-            ),
-            NavigationDestination(
-              icon: Icon(PhosphorIconsLight.user, color: AppTheme.textSecondary(context)),
-              selectedIcon: Icon(PhosphorIconsLight.user, color: AppTheme.accent(context)),
-              label: 'Profile',
-            ),
-            NavigationDestination(
-              icon: Icon(PhosphorIconsLight.gear, color: AppTheme.textSecondary(context)),
-              selectedIcon: Icon(PhosphorIconsLight.gear, color: AppTheme.accent(context)),
-              label: 'Settings',
-            ),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ],
         ),
       ),
