@@ -1,0 +1,59 @@
+name: Firmware CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware-ci.yml'
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  firmware-build:
+    name: Build ESP32 Firmware
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            firmware/.pio/build_cache
+          key: platformio-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: |
+            platformio-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build firmware
+        run: pio run --environment esp32dev
+
+      - name: Upload firmware binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-firmware
+          path: firmware/.pio/build/esp32dev/firmware.bin
+          retention-days: 30
