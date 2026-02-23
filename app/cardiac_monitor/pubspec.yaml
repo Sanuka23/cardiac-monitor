@@ -20,6 +20,8 @@ dependencies:
   permission_handler: ^11.3.1
   intl: ^0.19.0
   flutter_animate: ^4.5.2
+  shimmer: ^3.0.0
+  percent_indicator: ^4.2.5
 
 dev_dependencies:
   flutter_test:
