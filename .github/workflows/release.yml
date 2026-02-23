@@ -140,8 +140,13 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git clone https://huggingface.co/spaces/sanuka0523/cardiac-monitor-api hf-space --depth 1 || \
-            git init hf-space
+          # Clone existing HF Space or initialize fresh repo
+          if git clone "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/sanuka0523/cardiac-monitor-api" hf-space --depth 1 2>/dev/null; then
+            echo "Cloned existing HF Space"
+          else
+            echo "Initializing new HF Space repo"
+            git init -b main hf-space
+          fi
 
           # Copy backend files to HF Space
           rsync -av --delete \
@@ -164,7 +169,7 @@ jobs:
           git diff --cached --quiet && echo "No changes to deploy" && exit 0
 
           git commit -m "Deploy ${GITHUB_REF_NAME} from GitHub Actions"
-          git push origin main --force
+          git push origin HEAD --force
 
   create-release:
     name: Create GitHub Release
