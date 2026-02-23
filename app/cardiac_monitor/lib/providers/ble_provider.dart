@@ -21,7 +21,7 @@ class BleProvider extends ChangeNotifier {
   List<WifiScanResult> _wifiNetworks = [];
   bool _wifiScanning = false;
   List<int> _ecgBuffer = [];
-  static const int _ecgBufferMaxSamples = 500; // 5 seconds at 100Hz
+  static const int _ecgBufferMaxSamples = 1250; // 5 seconds at 250Hz
 
   StreamSubscription? _vitalsSub;
   StreamSubscription? _connSub;
