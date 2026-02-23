@@ -103,6 +103,7 @@
 #define BLE_CARDIAC_RISK_UUID    "0000CC03-1234-5678-9ABC-DEF012345678"
 #define BLE_CARDIAC_LABEL_UUID   "0000CC04-1234-5678-9ABC-DEF012345678"
 #define BLE_CARDIAC_STATUS_UUID  "0000CC05-1234-5678-9ABC-DEF012345678"
+#define BLE_CARDIAC_ECG_UUID     "0000CC06-1234-5678-9ABC-DEF012345678"
 
 // BLE Provisioning commands (written to CMD characteristic)
 #define BLE_CMD_CONNECT         0x01
@@ -126,6 +127,10 @@
 
 // BLE Vitals notification interval
 #define BLE_VITALS_NOTIFY_MS    1000
+
+// BLE ECG streaming
+#define ECG_BLE_NOTIFY_MS        200     // Send ECG batch every 200ms
+#define ECG_BLE_BATCH_MAX        60      // Max samples per notification (60*2=120 < 123 MTU)
 
 // WiFi Scan Configuration
 #define WIFI_SCAN_TIMEOUT_MS        10000

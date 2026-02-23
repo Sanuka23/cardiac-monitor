@@ -39,4 +39,8 @@ uint32_t sensorGetBeatCount();
 // Returns true every ECG_TEXT_DIVISOR samples (for 10Hz text output)
 bool sensorShouldPrintEcgText();
 
+// ECG buffer access for BLE streaming
+uint16_t        sensorGetEcgIndex();
+const uint16_t* sensorGetEcgBuffer();
+
 #endif // SENSOR_MANAGER_H

@@ -34,6 +34,7 @@ void        bleNotifyHeartRate(float hr);
 void        bleNotifySpO2(uint8_t spo2);
 void        bleNotifyRisk(float score, const char* label);
 void        bleNotifyDeviceStatus(uint8_t statusBits);
+void        bleNotifyEcgBatch(const uint16_t* samples, uint8_t count);
 
 // Update provisioning status characteristic
 void        bleSetProvisioningStatus(uint8_t status);

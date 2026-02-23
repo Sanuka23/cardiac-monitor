@@ -20,6 +20,8 @@ class BleProvider extends ChangeNotifier {
   String? _error;
   List<WifiScanResult> _wifiNetworks = [];
   bool _wifiScanning = false;
+  List<int> _ecgBuffer = [];
+  static const int _ecgBufferMaxSamples = 500; // 5 seconds at 100Hz
 
   StreamSubscription? _vitalsSub;
   StreamSubscription? _connSub;
@@ -27,6 +29,7 @@ class BleProvider extends ChangeNotifier {
   StreamSubscription? _scanSub;
   StreamSubscription? _wifiScanSub;
   StreamSubscription? _wifiScanCompleteSub;
+  StreamSubscription? _ecgSub;
 
   BleProvider(this._ble) {
     _connSub = _ble.connectionStream.listen((state) {
@@ -59,6 +62,15 @@ class BleProvider extends ChangeNotifier {
       _wifiScanning = false;
       notifyListeners();
     });
+    _ecgSub = _ble.ecgStream.listen((batch) {
+      _ecgBuffer.addAll(batch);
+      if (_ecgBuffer.length > _ecgBufferMaxSamples) {
+        _ecgBuffer = _ecgBuffer.sublist(
+          _ecgBuffer.length - _ecgBufferMaxSamples,
+        );
+      }
+      notifyListeners();
+    });
   }
 
   BleConnectionState get connectionState => _connectionState;
@@ -69,6 +81,8 @@ class BleProvider extends ChangeNotifier {
   bool get isWifiScanning => _wifiScanning;
   String? get error => _error;
   bool get isConnected => _connectionState == BleConnectionState.connected;
+  List<int> get ecgBuffer => _ecgBuffer;
+  bool get hasEcgData => _ecgBuffer.isNotEmpty;
 
   Future<void> startScan() async {
     _error = null;
@@ -131,6 +145,7 @@ class BleProvider extends ChangeNotifier {
     _vitals = BleVitals();
     _wifiNetworks = [];
     _wifiScanning = false;
+    _ecgBuffer = [];
     notifyListeners();
   }
 
@@ -142,6 +157,7 @@ class BleProvider extends ChangeNotifier {
     _scanSub?.cancel();
     _wifiScanSub?.cancel();
     _wifiScanCompleteSub?.cancel();
+    _ecgSub?.cancel();
     super.dispose();
   }
 }

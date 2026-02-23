@@ -59,6 +59,7 @@ static NimBLECharacteristic* _pSpo2Char = nullptr;
 static NimBLECharacteristic* _pRiskChar = nullptr;
 static NimBLECharacteristic* _pLabelChar = nullptr;
 static NimBLECharacteristic* _pDevStatusChar = nullptr;
+static NimBLECharacteristic* _pEcgChar = nullptr;
 
 // WiFi scan state machine
 enum WifiScanState { WSCAN_IDLE, WSCAN_RUNNING, WSCAN_SENDING };
@@ -222,6 +223,13 @@ void bleNotifyDeviceStatus(uint8_t statusBits) {
     _pDevStatusChar->notify();
 }
 
+void bleNotifyEcgBatch(const uint16_t* samples, uint8_t count) {
+    if (!_pEcgChar || !_clientConnected || count == 0) return;
+    // ESP32 is little-endian, so uint16_t array is already in LE byte order
+    _pEcgChar->setValue((const uint8_t*)samples, count * sizeof(uint16_t));
+    _pEcgChar->notify();
+}
+
 // ============================================================
 //  Mode Switching
 // ============================================================
@@ -320,6 +328,11 @@ BleBootMode bleInit() {
     _pDevStatusChar = pCardSvc->createCharacteristic(
         BLE_CARDIAC_STATUS_UUID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+    );
+
+    _pEcgChar = pCardSvc->createCharacteristic(
+        BLE_CARDIAC_ECG_UUID,
+        NIMBLE_PROPERTY::NOTIFY
     );
 
     pCardSvc->start();

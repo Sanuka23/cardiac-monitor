@@ -44,6 +44,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchEcg() async {
+    // Skip API fetch when live BLE ECG data is available
+    final ble = context.read<BleProvider>();
+    if (ble.isConnected && ble.hasEcgData) return;
+
     final auth = context.read<AuthProvider>();
     if (auth.deviceIds.isEmpty) return;
     if (_ecgLoading) return;
@@ -98,6 +102,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final connected = ble.isConnected;
     final now = DateTime.now();
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final bool useBleEcg = connected && ble.ecgBuffer.isNotEmpty;
+    final List<int>? displayEcgSamples = useBleEcg ? ble.ecgBuffer : _ecgSamples;
 
     return Scaffold(
       body: SafeArea(
@@ -290,7 +296,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                         ),
-                        if (_ecgTimestamp != null)
+                        if (useBleEcg)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF22C55E)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF22C55E),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Color(0xFF22C55E),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (_ecgTimestamp != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
@@ -321,9 +359,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (_ecgSamples != null && _ecgSamples!.isNotEmpty)
+                    if (displayEcgSamples != null && displayEcgSamples.isNotEmpty)
                       EcgChart(
-                        samples: _ecgSamples!,
+                        samples: displayEcgSamples,
                         sampleRateHz: _sampleRateHz,
                       )
                     else

@@ -13,6 +13,7 @@ class BleUuids {
   static const String cardiacRisk = '0000cc03-1234-5678-9abc-def012345678';
   static const String cardiacLabel = '0000cc04-1234-5678-9abc-def012345678';
   static const String cardiacStatus = '0000cc05-1234-5678-9abc-def012345678';
+  static const String cardiacEcg = '0000cc06-1234-5678-9abc-def012345678';
 }
 
 // BLE provisioning commands (write to provCmd)

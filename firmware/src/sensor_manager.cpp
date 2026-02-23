@@ -215,3 +215,6 @@ bool sensorShouldPrintEcgText() {
     }
     return false;
 }
+
+uint16_t sensorGetEcgIndex() { return _ecgIndex; }
+const uint16_t* sensorGetEcgBuffer() { return _ecgBuffer; }

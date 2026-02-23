@@ -21,6 +21,7 @@ class BleService {
       StreamController<BleConnectionState>.broadcast();
   final _wifiScanController = StreamController<WifiScanResult>.broadcast();
   final _wifiScanCompleteController = StreamController<void>.broadcast();
+  final _ecgController = StreamController<List<int>>.broadcast();
   final List<StreamSubscription> _subscriptions = [];
 
   BleVitals _currentVitals = BleVitals();
@@ -33,6 +34,7 @@ class BleService {
   Stream<WifiScanResult> get wifiScanStream => _wifiScanController.stream;
   Stream<void> get wifiScanCompleteStream =>
       _wifiScanCompleteController.stream;
+  Stream<List<int>> get ecgStream => _ecgController.stream;
   BleVitals get currentVitals => _currentVitals;
   BleConnectionState get connectionState => _connectionState;
   BluetoothDevice? get connectedDevice => _device;
@@ -143,6 +145,16 @@ class BleService {
       _currentVitals = _currentVitals.copyWith(riskLabel: label);
     } else if (uuid == BleUuids.cardiacStatus) {
       _currentVitals = _currentVitals.copyWith(deviceStatus: value[0]);
+    } else if (uuid == BleUuids.cardiacEcg && value.length >= 2) {
+      // Parse batch of uint16 LE ECG samples
+      final bytes = Uint8List.fromList(value);
+      final byteData = ByteData.sublistView(bytes);
+      final samples = <int>[];
+      for (int i = 0; i + 1 < bytes.length; i += 2) {
+        samples.add(byteData.getUint16(i, Endian.little));
+      }
+      if (samples.isNotEmpty) _ecgController.add(samples);
+      return; // ECG data is separate from vitals
     }
 
     _vitalsController.add(_currentVitals);
@@ -252,5 +264,6 @@ class BleService {
     _connectionController.close();
     _wifiScanController.close();
     _wifiScanCompleteController.close();
+    _ecgController.close();
   }
 }

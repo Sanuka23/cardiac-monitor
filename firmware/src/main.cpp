@@ -43,6 +43,10 @@ static bool plotterMode = false;
 // --- BLE vitals notification timing ---
 static uint32_t _lastBleNotify = 0;
 
+// --- BLE ECG streaming ---
+static uint16_t _bleEcgSentIndex = 0;
+static uint32_t _lastBleEcgNotify = 0;
+
 // --- Provisioning LED blink ---
 static uint32_t _lastProvLedToggle = 0;
 static bool _provLedState = false;
@@ -130,6 +134,8 @@ static void handleDataWindow() {
 
     SensorWindow window;
     if (!sensorGetWindow(window)) return;
+
+    _bleEcgSentIndex = 0;  // Reset BLE ECG tracking for new window
 
 #if !WIFI_MODE_ENABLED
     Serial.printf("[WINDOW] %u samples, %u beats, HR=%.1f, SpO2=%u, LeadOff=%d\n",
@@ -310,6 +316,18 @@ void loop() {
         if (sensorIsEcgLeadOff()) devStatus |= 0x04;
         if (wifiGetState() == WIFI_STATE_READY) devStatus |= 0x08;
         bleNotifyDeviceStatus(devStatus);
+    }
+
+    // BLE ECG streaming (every ECG_BLE_NOTIFY_MS, only if client connected)
+    if (bleIsClientConnected() && millis() - _lastBleEcgNotify >= ECG_BLE_NOTIFY_MS) {
+        _lastBleEcgNotify = millis();
+        uint16_t currentIndex = sensorGetEcgIndex();
+        if (currentIndex > _bleEcgSentIndex) {
+            uint16_t count = currentIndex - _bleEcgSentIndex;
+            if (count > ECG_BLE_BATCH_MAX) count = ECG_BLE_BATCH_MAX;
+            bleNotifyEcgBatch(sensorGetEcgBuffer() + _bleEcgSentIndex, (uint8_t)count);
+            _bleEcgSentIndex += count;
+        }
     }
 
     // Provisioning mode LED blink (500ms toggle)
