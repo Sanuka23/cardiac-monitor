@@ -26,6 +26,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final accent = AppTheme.accent(context);
 
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
@@ -34,22 +35,28 @@ class _AppShellState extends State<AppShell> {
           color: AppTheme.cardBackground(context),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isLight ? 0.06 : 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
+              color: isLight
+                  ? Colors.black.withValues(alpha: 0.06)
+                  : Colors.black.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem(0, PhosphorIconsLight.heartbeat, PhosphorIconsBold.heartbeat, 'Monitor'),
-                _navItem(1, PhosphorIconsLight.chartLine, PhosphorIconsBold.chartLine, 'Trends'),
-                _navItem(2, PhosphorIconsLight.user, PhosphorIconsBold.user, 'Profile'),
-                _navItem(3, PhosphorIconsLight.gear, PhosphorIconsBold.gear, 'Settings'),
+                _navItem(0, PhosphorIconsLight.heartbeat,
+                    PhosphorIconsBold.heartbeat, 'Monitor', accent),
+                _navItem(1, PhosphorIconsLight.chartLine,
+                    PhosphorIconsBold.chartLine, 'Trends', accent),
+                _navItem(2, PhosphorIconsLight.user,
+                    PhosphorIconsBold.user, 'Profile', accent),
+                _navItem(3, PhosphorIconsLight.gear,
+                    PhosphorIconsBold.gear, 'Settings', accent),
               ],
             ),
           ),
@@ -58,22 +65,23 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _navItem(int index, IconData icon, IconData activeIcon, String label) {
+  Widget _navItem(
+      int index, IconData icon, IconData activeIcon, String label, Color accent) {
     final selected = _index == index;
-    final accent = AppTheme.accent(context);
 
     return GestureDetector(
       onTap: () => setState(() => _index = index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: selected ? 16 : 12,
-          vertical: 8,
+          horizontal: selected ? 20 : 16,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
           color: selected ? accent.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -84,12 +92,12 @@ class _AppShellState extends State<AppShell> {
               color: selected ? accent : AppTheme.textTertiary(context),
             ),
             if (selected) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
                   color: accent,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
