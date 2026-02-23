@@ -38,6 +38,9 @@ void        bleNotifyDeviceStatus(uint8_t statusBits);
 // Update provisioning status characteristic
 void        bleSetProvisioningStatus(uint8_t status);
 
+// WiFi scan processing (called from main loop)
+void        bleProcessWifiScan();
+
 // State queries
 bool        bleIsClientConnected();
 bool        bleIsProvisioning();

@@ -5,6 +5,10 @@
 #include <NimBLEDevice.h>
 #include <Preferences.h>
 
+#if WIFI_MODE_ENABLED
+#include <WiFi.h>
+#endif
+
 // ============================================================
 //  Event Ring Buffer (single-producer single-consumer, ISR-safe)
 // ============================================================
@@ -12,6 +16,7 @@ enum BleEventType {
     BLE_EVT_NONE = 0,
     BLE_EVT_CMD_CONNECT,
     BLE_EVT_CMD_CLEAR,
+    BLE_EVT_CMD_WIFI_SCAN,
     BLE_EVT_CLIENT_CONNECTED,
     BLE_EVT_CLIENT_DISCONNECTED
 };
@@ -48,11 +53,20 @@ static NimBLEServer* _pServer = nullptr;
 
 // Characteristic pointers for notifications
 static NimBLECharacteristic* _pProvStatusChar = nullptr;
+static NimBLECharacteristic* _pScanResultChar = nullptr;
 static NimBLECharacteristic* _pHrChar = nullptr;
 static NimBLECharacteristic* _pSpo2Char = nullptr;
 static NimBLECharacteristic* _pRiskChar = nullptr;
 static NimBLECharacteristic* _pLabelChar = nullptr;
 static NimBLECharacteristic* _pDevStatusChar = nullptr;
+
+// WiFi scan state machine
+enum WifiScanState { WSCAN_IDLE, WSCAN_RUNNING, WSCAN_SENDING };
+static WifiScanState _wScanState = WSCAN_IDLE;
+static uint32_t _wScanStartMs = 0;
+static int16_t _wScanTotal = 0;
+static int16_t _wScanIdx = 0;
+static uint32_t _wScanLastNotifyMs = 0;
 
 static Preferences _prefs;
 
@@ -101,6 +115,8 @@ class ProvCallbacks : public NimBLECharacteristicCallbacks {
                     evtPush(BLE_EVT_CMD_CONNECT);
                 } else if (cmd == BLE_CMD_CLEAR_CREDS) {
                     evtPush(BLE_EVT_CMD_CLEAR);
+                } else if (cmd == BLE_CMD_WIFI_SCAN) {
+                    evtPush(BLE_EVT_CMD_WIFI_SCAN);
                 }
             }
         }
@@ -271,6 +287,11 @@ BleBootMode bleInit() {
     uint8_t idle = BLE_STATUS_IDLE;
     _pProvStatusChar->setValue(&idle, 1);
 
+    _pScanResultChar = pProvSvc->createCharacteristic(
+        BLE_PROV_SCAN_RESULT_UUID,
+        NIMBLE_PROPERTY::NOTIFY
+    );
+
     pProvSvc->start();
 
     // 4. Cardiac Monitor Service
@@ -366,12 +387,124 @@ void bleUpdate() {
                 bleEnterProvisioning();
                 break;
 
+            case BLE_EVT_CMD_WIFI_SCAN:
+#if WIFI_MODE_ENABLED
+                if (_wScanState == WSCAN_IDLE) {
+                    Serial.println("[BLE] WiFi scan requested");
+                    WiFi.scanDelete();
+                    WiFi.scanNetworks(true);  // async
+                    _wScanState = WSCAN_RUNNING;
+                    _wScanStartMs = millis();
+                } else {
+                    Serial.println("[BLE] Scan already in progress, ignoring");
+                }
+#endif
+                break;
+
             case BLE_EVT_CLIENT_DISCONNECTED:
-                // Advertising restarted in callback
+                // Abort any active scan
+                if (_wScanState != WSCAN_IDLE) {
+                    _wScanState = WSCAN_IDLE;
+#if WIFI_MODE_ENABLED
+                    WiFi.scanDelete();
+#endif
+                    Serial.println("[BLE] Scan aborted (client disconnected)");
+                }
                 break;
 
             default:
                 break;
         }
     }
+}
+
+// ============================================================
+//  WiFi Scan Processing (call from main loop)
+// ============================================================
+void bleProcessWifiScan() {
+#if WIFI_MODE_ENABLED
+    if (_wScanState == WSCAN_IDLE) return;
+
+    if (_wScanState == WSCAN_RUNNING) {
+        int16_t result = WiFi.scanComplete();
+        if (result == WIFI_SCAN_RUNNING) {
+            // Still scanning, check timeout
+            if (millis() - _wScanStartMs > WIFI_SCAN_TIMEOUT_MS) {
+                Serial.println("[BLE] WiFi scan timeout");
+                WiFi.scanDelete();
+                // Send empty end marker
+                if (_pScanResultChar && _clientConnected) {
+                    _pScanResultChar->setValue((uint8_t*)"", 0);
+                    _pScanResultChar->notify();
+                }
+                _wScanState = WSCAN_IDLE;
+            }
+            return;
+        }
+        if (result == WIFI_SCAN_FAILED || result < 0) {
+            Serial.println("[BLE] WiFi scan failed");
+            WiFi.scanDelete();
+            if (_pScanResultChar && _clientConnected) {
+                _pScanResultChar->setValue((uint8_t*)"", 0);
+                _pScanResultChar->notify();
+            }
+            _wScanState = WSCAN_IDLE;
+            return;
+        }
+        // Scan complete
+        _wScanTotal = min((int16_t)result, (int16_t)WIFI_SCAN_MAX_RESULTS);
+        _wScanIdx = 0;
+        _wScanLastNotifyMs = 0;
+        Serial.printf("[BLE] WiFi scan done: %d networks found\n", result);
+
+        if (_wScanTotal == 0) {
+            // No networks, send end marker
+            if (_pScanResultChar && _clientConnected) {
+                _pScanResultChar->setValue((uint8_t*)"", 0);
+                _pScanResultChar->notify();
+            }
+            WiFi.scanDelete();
+            _wScanState = WSCAN_IDLE;
+            return;
+        }
+        _wScanState = WSCAN_SENDING;
+    }
+
+    if (_wScanState == WSCAN_SENDING) {
+        if (!_clientConnected) {
+            WiFi.scanDelete();
+            _wScanState = WSCAN_IDLE;
+            return;
+        }
+
+        // Pace notifications
+        if (millis() - _wScanLastNotifyMs < WIFI_SCAN_NOTIFY_INTERVAL_MS) return;
+        _wScanLastNotifyMs = millis();
+
+        if (_wScanIdx < _wScanTotal) {
+            // Format: "index,total,rssi,encType,ssid"
+            char buf[128];
+            String ssid = WiFi.SSID(_wScanIdx);
+            int32_t rssi = WiFi.RSSI(_wScanIdx);
+            uint8_t encType = WiFi.encryptionType(_wScanIdx);
+            snprintf(buf, sizeof(buf), "%d,%d,%d,%u,%s",
+                     _wScanIdx, _wScanTotal, rssi, encType, ssid.c_str());
+
+            if (_pScanResultChar) {
+                _pScanResultChar->setValue((uint8_t*)buf, strlen(buf));
+                _pScanResultChar->notify();
+            }
+            _wScanIdx++;
+        } else {
+            // All sent, send empty end marker
+            if (_pScanResultChar) {
+                _pScanResultChar->setValue((uint8_t*)"", 0);
+                _pScanResultChar->notify();
+            }
+            WiFi.scanDelete();
+            _wScanState = WSCAN_IDLE;
+            Serial.println("[BLE] WiFi scan results sent");
+        }
+    }
+#endif
 }

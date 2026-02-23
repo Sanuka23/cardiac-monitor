@@ -5,6 +5,7 @@ class BleUuids {
   static const String provPass = '0000ff02-1234-5678-9abc-def012345678';
   static const String provCmd = '0000ff03-1234-5678-9abc-def012345678';
   static const String provStatus = '0000ff04-1234-5678-9abc-def012345678';
+  static const String provScanResult = '0000ff05-1234-5678-9abc-def012345678';
 
   static const String cardiacService = '0000cc00-1234-5678-9abc-def012345678';
   static const String cardiacHr = '0000cc01-1234-5678-9abc-def012345678';
@@ -18,6 +19,7 @@ class BleUuids {
 class BleCmds {
   static const int connect = 0x01;
   static const int clearCreds = 0x02;
+  static const int wifiScan = 0x03;
 }
 
 // BLE provisioning status codes (read from provStatus notifications)

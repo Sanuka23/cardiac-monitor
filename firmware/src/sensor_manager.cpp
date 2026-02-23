@@ -60,7 +60,8 @@ static bool initializeMax30100() {
         Wire.setClock(100000);
 
         if (pox.begin()) {
-            Serial.println("[SENSOR] MAX30100 initialized.");
+            Wire.setClock(100000);
+            Serial.println("[SENSOR] MAX30100 initialized (I2C 100kHz).");
             pox.setIRLedCurrent(IR_LED_CURRENT);
             pox.setOnBeatDetectedCallback(onBeatDetected);
             _tsLastBeatChange = millis();

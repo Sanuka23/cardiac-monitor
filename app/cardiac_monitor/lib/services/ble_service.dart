@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../config/constants.dart';
 import '../models/ble_vitals.dart';
+import '../models/wifi_scan_result.dart';
 
 /// BLE connection states exposed to the UI layer.
 enum BleConnectionState { disconnected, scanning, connecting, connected }
@@ -18,6 +19,8 @@ class BleService {
   final _provStatusController = StreamController<int>.broadcast();
   final _connectionController =
       StreamController<BleConnectionState>.broadcast();
+  final _wifiScanController = StreamController<WifiScanResult>.broadcast();
+  final _wifiScanCompleteController = StreamController<void>.broadcast();
   final List<StreamSubscription> _subscriptions = [];
 
   BleVitals _currentVitals = BleVitals();
@@ -27,6 +30,9 @@ class BleService {
   Stream<int> get provisioningStatusStream => _provStatusController.stream;
   Stream<BleConnectionState> get connectionStream =>
       _connectionController.stream;
+  Stream<WifiScanResult> get wifiScanStream => _wifiScanController.stream;
+  Stream<void> get wifiScanCompleteStream =>
+      _wifiScanCompleteController.stream;
   BleVitals get currentVitals => _currentVitals;
   BleConnectionState get connectionState => _connectionState;
   BluetoothDevice? get connectedDevice => _device;
@@ -41,7 +47,7 @@ class BleService {
     _setState(BleConnectionState.scanning);
     FlutterBluePlus.startScan(
       timeout: timeout,
-      withNames: [bleDeviceNamePrefix],
+      withServices: [Guid(BleUuids.provService)],
     );
     return FlutterBluePlus.scanResults.expand((list) => list);
   }
@@ -96,6 +102,12 @@ class BleService {
               }
             }));
           }
+          if (uuid == BleUuids.provScanResult && c.properties.notify) {
+            c.setNotifyValue(true);
+            _subscriptions.add(c.onValueReceived.listen((value) {
+              _handleWifiScanNotification(value);
+            }));
+          }
         }
       }
 
@@ -134,6 +146,47 @@ class BleService {
     }
 
     _vitalsController.add(_currentVitals);
+  }
+
+  // --- WiFi Scan Notification Handler ---
+  void _handleWifiScanNotification(List<int> value) {
+    if (value.isEmpty) {
+      // End marker — scan complete
+      _wifiScanCompleteController.add(null);
+      return;
+    }
+    // Format: "index,total,rssi,encType,ssid"
+    final csv = String.fromCharCodes(value);
+    final parts = csv.split(',');
+    if (parts.length < 5) return;
+
+    final rssi = int.tryParse(parts[2]) ?? -100;
+    final encType = int.tryParse(parts[3]) ?? 0;
+    // SSID may contain commas — rejoin everything after index 4
+    final ssid = parts.sublist(4).join(',');
+    if (ssid.isEmpty) return;
+
+    _wifiScanController.add(WifiScanResult(
+      ssid: ssid,
+      rssi: rssi,
+      encryptionType: encType,
+    ));
+  }
+
+  // --- Request WiFi Scan ---
+  Future<void> requestWifiScan() async {
+    if (_device == null) throw Exception('Not connected');
+    final services = await _device!.discoverServices();
+
+    for (final svc in services) {
+      if (svc.uuid.toString().toLowerCase() != BleUuids.provService) continue;
+      for (final c in svc.characteristics) {
+        if (c.uuid.toString().toLowerCase() == BleUuids.provCmd) {
+          await c.write([BleCmds.wifiScan], withoutResponse: false);
+          return;
+        }
+      }
+    }
   }
 
   // --- WiFi Provisioning ---
@@ -197,5 +250,7 @@ class BleService {
     _vitalsController.close();
     _provStatusController.close();
     _connectionController.close();
+    _wifiScanController.close();
+    _wifiScanCompleteController.close();
   }
 }

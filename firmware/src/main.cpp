@@ -74,14 +74,16 @@ static void serialOutputPlotter() {
         sensorGetSpO2());
 }
 
+static bool _lastLeadOffState = false;
 static void serialOutputText() {
-    if (sensorShouldPrintEcgText()) {
-        if (sensorIsEcgLeadOff()) {
-            Serial.println("[ECG] Leads OFF - reattach electrodes!");
-        } else {
-            Serial.printf("[ECG] %d | Leads: OK\n", sensorGetLastEcgValue());
-        }
+    // Print lead-off warning only on state change (not every sample)
+    bool leadOff = sensorIsEcgLeadOff();
+    if (leadOff && !_lastLeadOffState) {
+        Serial.println("[ECG] Leads OFF - reattach electrodes!");
+    } else if (!leadOff && _lastLeadOffState) {
+        Serial.println("[ECG] Leads OK");
     }
+    _lastLeadOffState = leadOff;
 }
 
 static uint32_t _lastVitalReport = 0;
@@ -254,6 +256,7 @@ void loop() {
 
     // BLE event processing (non-blocking)
     bleUpdate();
+    bleProcessWifiScan();
 
     // WiFi state machine (non-blocking)
 #if WIFI_MODE_ENABLED

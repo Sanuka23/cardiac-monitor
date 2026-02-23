@@ -23,12 +23,15 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
   final _ssidC = TextEditingController();
   final _passC = TextEditingController();
   final _deviceIdC = TextEditingController();
+  bool _manualEntry = false;
+  final _passFocus = FocusNode();
 
   @override
   void dispose() {
     _ssidC.dispose();
     _passC.dispose();
     _deviceIdC.dispose();
+    _passFocus.dispose();
     super.dispose();
   }
 
@@ -388,6 +391,10 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
   }
 
   Widget _buildWifiStep() {
+    final ble = context.watch<BleProvider>();
+    final networks = ble.wifiNetworks;
+    final scanning = ble.isWifiScanning;
+
     return SingleChildScrollView(
       key: const ValueKey('wifi'),
       child: Column(
@@ -403,39 +410,231 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter your WiFi credentials to connect the device.',
+            'Scan for available networks or enter manually.',
             style: TextStyle(color: AppTheme.textSecondary(context)),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+
+          // Scan button
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: scanning ? null : () => ble.requestWifiScan(),
+              icon: scanning
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.accent(context),
+                      ),
+                    )
+                  : Icon(PhosphorIconsLight.wifiHigh,
+                      color: AppTheme.accent(context), size: 20),
+              label: Text(
+                scanning ? 'Scanning...' : 'Scan for Networks',
+                style: TextStyle(color: AppTheme.accent(context)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                    color: AppTheme.accent(context).withValues(alpha: 0.4)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+
+          // Network list
+          if (networks.isNotEmpty && !_manualEntry) ...[
+            const SizedBox(height: 14),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: networks.length,
+                itemBuilder: (_, i) {
+                  final net = networks[i];
+                  final isSelected = _ssidC.text == net.ssid;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: GlassCard(
+                      padding: EdgeInsets.zero,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _ssidC.text = net.ssid;
+                          });
+                          _passFocus.requestFocus();
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          child: Row(
+                            children: [
+                              Icon(
+                                net.isOpen
+                                    ? PhosphorIconsLight.wifiHigh
+                                    : PhosphorIconsLight.lock,
+                                color: isSelected
+                                    ? AppTheme.accent(context)
+                                    : AppTheme.textSecondary(context),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      net.ssid,
+                                      style: TextStyle(
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color:
+                                            AppTheme.textPrimary(context),
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      net.securityLabel,
+                                      style: TextStyle(
+                                        color: AppTheme.textSecondary(
+                                            context),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Signal bars
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: List.generate(4, (j) {
+                                  return Container(
+                                    width: 3,
+                                    height: 6.0 + (j * 4),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 1),
+                                    decoration: BoxDecoration(
+                                      color: j < net.signalBars
+                                          ? AppTheme.accent(context)
+                                          : AppTheme.surfaceVariant(
+                                              context),
+                                      borderRadius:
+                                          BorderRadius.circular(2),
+                                    ),
+                                  );
+                                }),
+                              ),
+                              if (isSelected) ...[
+                                const SizedBox(width: 8),
+                                Icon(PhosphorIconsLight.checkCircle,
+                                    color: AppTheme.accent(context),
+                                    size: 18),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+
+          // Manual entry toggle
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: () => setState(() {
+                _manualEntry = !_manualEntry;
+                if (_manualEntry) _ssidC.clear();
+              }),
+              child: Text(
+                _manualEntry ? 'Select from scan results' : 'Enter manually',
+                style: TextStyle(
+                  color: AppTheme.accent(context),
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
           GlassCard(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                TextField(
-                  controller: _ssidC,
-                  style: TextStyle(color: AppTheme.textPrimary(context)),
-                  decoration: InputDecoration(
-                    hintText: 'WiFi Network Name (SSID)',
-                    hintStyle:
-                        TextStyle(color: AppTheme.textSecondary(context)),
-                    prefixIcon: Icon(PhosphorIconsLight.wifiHigh,
-                        color: AppTheme.textSecondary(context)),
-                    filled: true,
-                    fillColor: AppTheme.surfaceVariant(context),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
+                // Show SSID field if manual or no selection
+                if (_manualEntry || _ssidC.text.isEmpty)
+                  TextField(
+                    controller: _ssidC,
+                    style: TextStyle(color: AppTheme.textPrimary(context)),
+                    decoration: InputDecoration(
+                      hintText: 'WiFi Network Name (SSID)',
+                      hintStyle:
+                          TextStyle(color: AppTheme.textSecondary(context)),
+                      prefixIcon: Icon(PhosphorIconsLight.wifiHigh,
+                          color: AppTheme.textSecondary(context)),
+                      filled: true,
+                      fillColor: AppTheme.surfaceVariant(context),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                            color: AppTheme.accent(context), width: 1.5),
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                  )
+                else
+                  // Show selected network chip
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent(context).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                          color: AppTheme.accent(context), width: 1.5),
+                      border: Border.all(
+                          color:
+                              AppTheme.accent(context).withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(PhosphorIconsLight.wifiHigh,
+                            color: AppTheme.accent(context), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _ssidC.text,
+                            style: TextStyle(
+                              color: AppTheme.textPrimary(context),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => _ssidC.clear()),
+                          child: Icon(PhosphorIconsLight.x,
+                              color: AppTheme.textSecondary(context),
+                              size: 18),
+                        ),
+                      ],
                     ),
                   ),
-                ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _passC,
+                  focusNode: _passFocus,
                   obscureText: true,
                   style: TextStyle(color: AppTheme.textPrimary(context)),
                   decoration: InputDecoration(

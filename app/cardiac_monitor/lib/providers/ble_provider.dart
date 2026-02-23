@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/ble_vitals.dart';
+import '../models/wifi_scan_result.dart';
 import '../services/ble_service.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -17,11 +18,15 @@ class BleProvider extends ChangeNotifier {
   int _provStatus = 0;
   List<ScanResult> _scanResults = [];
   String? _error;
+  List<WifiScanResult> _wifiNetworks = [];
+  bool _wifiScanning = false;
 
   StreamSubscription? _vitalsSub;
   StreamSubscription? _connSub;
   StreamSubscription? _provSub;
   StreamSubscription? _scanSub;
+  StreamSubscription? _wifiScanSub;
+  StreamSubscription? _wifiScanCompleteSub;
 
   BleProvider(this._ble) {
     _connSub = _ble.connectionStream.listen((state) {
@@ -36,12 +41,32 @@ class BleProvider extends ChangeNotifier {
       _provStatus = s;
       notifyListeners();
     });
+    _wifiScanSub = _ble.wifiScanStream.listen((result) {
+      // Deduplicate by SSID, keep strongest signal
+      final idx = _wifiNetworks.indexWhere((n) => n.ssid == result.ssid);
+      if (idx >= 0) {
+        if (result.rssi > _wifiNetworks[idx].rssi) {
+          _wifiNetworks[idx] = result;
+        }
+      } else {
+        _wifiNetworks.add(result);
+      }
+      // Sort by signal strength (strongest first)
+      _wifiNetworks.sort((a, b) => b.rssi.compareTo(a.rssi));
+      notifyListeners();
+    });
+    _wifiScanCompleteSub = _ble.wifiScanCompleteStream.listen((_) {
+      _wifiScanning = false;
+      notifyListeners();
+    });
   }
 
   BleConnectionState get connectionState => _connectionState;
   BleVitals get vitals => _vitals;
   int get provisioningStatus => _provStatus;
   List<ScanResult> get scanResults => _scanResults;
+  List<WifiScanResult> get wifiNetworks => _wifiNetworks;
+  bool get isWifiScanning => _wifiScanning;
   String? get error => _error;
   bool get isConnected => _connectionState == BleConnectionState.connected;
 
@@ -88,9 +113,24 @@ class BleProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> requestWifiScan() async {
+    _wifiNetworks = [];
+    _wifiScanning = true;
+    notifyListeners();
+    try {
+      await _ble.requestWifiScan();
+    } catch (e) {
+      _wifiScanning = false;
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
   Future<void> disconnect() async {
     await _ble.disconnect();
     _vitals = BleVitals();
+    _wifiNetworks = [];
+    _wifiScanning = false;
     notifyListeners();
   }
 
@@ -100,6 +140,8 @@ class BleProvider extends ChangeNotifier {
     _connSub?.cancel();
     _provSub?.cancel();
     _scanSub?.cancel();
+    _wifiScanSub?.cancel();
+    _wifiScanCompleteSub?.cancel();
     super.dispose();
   }
 }

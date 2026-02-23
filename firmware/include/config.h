@@ -33,7 +33,7 @@
 // ============================================================
 #define MAX_INIT_RETRIES        5
 #define INIT_RETRY_DELAY_MS     1000
-#define IR_LED_CURRENT          MAX30100_LED_CURR_7_6MA
+#define IR_LED_CURRENT          MAX30100_LED_CURR_27_1MA
 #define STALL_TIMEOUT_MS        10000
 #define HR_REPORT_PERIOD_MS     1000
 
@@ -51,7 +51,7 @@
 //  WIFI CONFIGURATION (Phase 4: credentials from NVS via BLE)
 // ============================================================
 // Fallback WiFi credentials for testing (used when NVS is empty)
-#define WIFI_DEFAULT_SSID       "Home Net"
+#define WIFI_DEFAULT_SSID       "Home Net "
 #define WIFI_DEFAULT_PASS       "0663661047"
 
 #define WIFI_CONNECT_TIMEOUT_MS 15000
@@ -94,6 +94,7 @@
 #define BLE_PROV_PASS_UUID      "0000FF02-1234-5678-9ABC-DEF012345678"
 #define BLE_PROV_CMD_UUID       "0000FF03-1234-5678-9ABC-DEF012345678"
 #define BLE_PROV_STATUS_UUID    "0000FF04-1234-5678-9ABC-DEF012345678"
+#define BLE_PROV_SCAN_RESULT_UUID "0000FF05-1234-5678-9ABC-DEF012345678"
 
 // Cardiac Monitor Service
 #define BLE_CARDIAC_SERVICE_UUID "0000CC00-1234-5678-9ABC-DEF012345678"
@@ -106,6 +107,7 @@
 // BLE Provisioning commands (written to CMD characteristic)
 #define BLE_CMD_CONNECT         0x01
 #define BLE_CMD_CLEAR_CREDS     0x02
+#define BLE_CMD_WIFI_SCAN       0x03
 
 // BLE Provisioning status codes (read/notified from STATUS characteristic)
 #define BLE_STATUS_IDLE         0x00
@@ -124,5 +126,10 @@
 
 // BLE Vitals notification interval
 #define BLE_VITALS_NOTIFY_MS    1000
+
+// WiFi Scan Configuration
+#define WIFI_SCAN_TIMEOUT_MS        10000
+#define WIFI_SCAN_NOTIFY_INTERVAL_MS 30
+#define WIFI_SCAN_MAX_RESULTS       20
 
 #endif // CONFIG_H
