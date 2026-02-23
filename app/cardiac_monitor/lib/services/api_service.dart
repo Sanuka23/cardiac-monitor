@@ -46,11 +46,10 @@ class ApiService {
   Future<TokenResponse> login(String email, String password) async {
     final resp = await _dio.post(
       '$_baseUrl${ApiPaths.login}',
-      data: FormData.fromMap({
-        'username': email,
+      data: {
+        'email': email,
         'password': password,
-      }),
-      options: Options(contentType: Headers.formUrlEncodedContentType),
+      },
     );
     return TokenResponse.fromJson(resp.data);
   }

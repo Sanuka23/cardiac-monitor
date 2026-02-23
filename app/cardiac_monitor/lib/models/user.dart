@@ -21,8 +21,8 @@ class User {
         email: json['email'] ?? '',
         name: json['name'] ?? '',
         deviceIds: List<String>.from(json['device_ids'] ?? []),
-        healthProfile: json['health_profile'] != null
-            ? HealthProfile.fromJson(json['health_profile'])
+        healthProfile: (json['health_profile'] ?? json['profile']) != null
+            ? HealthProfile.fromJson(json['health_profile'] ?? json['profile'])
             : null,
       );
 }
