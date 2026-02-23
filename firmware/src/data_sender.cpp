@@ -1,6 +1,10 @@
 #include "data_sender.h"
 #include "config.h"
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/queue.h>
+
 #if WIFI_MODE_ENABLED
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -11,6 +15,11 @@
 static int _lastHttpCode = 0;
 static uint32_t _successCount = 0;
 static uint32_t _failCount = 0;
+
+// FreeRTOS async sending
+static QueueHandle_t _sendQueue = nullptr;
+static QueueHandle_t _resultQueue = nullptr;
+static TaskHandle_t  _sendTaskHandle = nullptr;
 
 void dataSenderInit() {
     _lastHttpCode = 0;
@@ -134,3 +143,70 @@ SendResult dataSenderPost(const SensorWindow& window,
 int      dataSenderGetLastHttpCode() { return _lastHttpCode; }
 uint32_t dataSenderGetSuccessCount() { return _successCount; }
 uint32_t dataSenderGetFailCount()    { return _failCount; }
+
+// ============================================================
+//  FreeRTOS Background Task
+// ============================================================
+static void dataSenderTaskFn(void* param) {
+    DataSendJob job;
+    while (true) {
+        if (xQueueReceive(_sendQueue, &job, portMAX_DELAY) == pdTRUE) {
+            PredictionResult prediction;
+            prediction.valid = false;
+            SendResult result = SEND_NOT_READY;
+
+            for (int attempt = 0; attempt <= API_MAX_RETRIES; attempt++) {
+                if (attempt > 0) {
+                    Serial.printf("[SEND] Retry %d/%d...\n", attempt, API_MAX_RETRIES);
+                    vTaskDelay(pdMS_TO_TICKS(500));
+                }
+                result = dataSenderPost(job.window, job.deviceId, job.timestamp, prediction);
+                if (result == SEND_OK || result == SEND_JSON_ERROR || result == SEND_NOT_READY) break;
+            }
+
+            DataSendResult res = { prediction, result };
+            xQueueOverwrite(_resultQueue, &res);
+        }
+    }
+}
+
+void dataSenderStartTask() {
+    _sendQueue = xQueueCreate(DATA_SEND_QUEUE_DEPTH, sizeof(DataSendJob));
+    _resultQueue = xQueueCreate(1, sizeof(DataSendResult));
+
+    xTaskCreatePinnedToCore(
+        dataSenderTaskFn,
+        "DataSender",
+        DATA_SEND_TASK_STACK,
+        nullptr,
+        DATA_SEND_TASK_PRIORITY,
+        &_sendTaskHandle,
+        DATA_SEND_TASK_CORE
+    );
+    Serial.println("[SEND] Background task started on Core 0");
+}
+
+bool dataSenderEnqueue(const SensorWindow& window, const char* deviceId, time_t timestamp) {
+    if (!_sendQueue) return false;
+    DataSendJob job;
+    job.window = window;
+    strncpy(job.deviceId, deviceId, sizeof(job.deviceId) - 1);
+    job.deviceId[sizeof(job.deviceId) - 1] = '\0';
+    job.timestamp = timestamp;
+
+    if (xQueueSend(_sendQueue, &job, 0) != pdTRUE) {
+        Serial.println("[SEND] Queue full, window dropped");
+        return false;
+    }
+    return true;
+}
+
+bool dataSenderPollResult(DataSendResult& out) {
+    if (!_resultQueue) return false;
+    return xQueueReceive(_resultQueue, &out, 0) == pdTRUE;
+}
+
+bool dataSenderIsBusy() {
+    if (!_sendQueue) return false;
+    return uxQueueMessagesWaiting(_sendQueue) > 0;
+}

@@ -83,6 +83,12 @@
 #define API_TIMEOUT_MS          10000
 #define API_MAX_RETRIES         2
 
+// Background data sender task (FreeRTOS)
+#define DATA_SEND_TASK_STACK    12288   // 12KB stack for HTTPS + JSON + TLS
+#define DATA_SEND_TASK_PRIORITY 1       // Low priority (sensor loop is higher)
+#define DATA_SEND_TASK_CORE     0       // Core 0 (Arduino loop runs on Core 1)
+#define DATA_SEND_QUEUE_DEPTH   2       // Buffer up to 2 windows
+
 // ============================================================
 //  BLE CONFIGURATION
 // ============================================================

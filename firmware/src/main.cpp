@@ -128,7 +128,7 @@ static void printWifiStatus() {
     }
 }
 
-// --- Handle completed 10s data window ---
+// --- Handle completed 10s data window (non-blocking) ---
 static void handleDataWindow() {
     if (!sensorIsWindowReady()) return;
 
@@ -154,35 +154,28 @@ static void handleDataWindow() {
         return;
     }
 
-    PredictionResult prediction;
+    // Enqueue for background task on Core 0 (non-blocking)
+    if (dataSenderEnqueue(window, wifiGetDeviceId(), timestamp)) {
+        Serial.printf("[WINDOW] Queued %u samples for send\n", window.ecgSampleCount);
+    }
+#endif
+}
 
-    for (int attempt = 0; attempt <= API_MAX_RETRIES; attempt++) {
-        if (attempt > 0) {
-            Serial.printf("[WINDOW] Retry %d/%d...\n", attempt, API_MAX_RETRIES);
-            delay(500);
-        }
-
-        SendResult result = dataSenderPost(window, wifiGetDeviceId(), timestamp, prediction);
-
-        if (result == SEND_OK) {
-            if (prediction.valid) {
-                if (!plotterMode) {
-                    Serial.printf("[RISK] %s (score=%.3f, confidence=%.3f)\n",
-                        prediction.riskLabel, prediction.riskScore, prediction.confidence);
-                }
-                bleNotifyRisk(prediction.riskScore, prediction.riskLabel);
+// --- Check for results from background send task ---
+static void checkSendResult() {
+    DataSendResult res;
+    if (dataSenderPollResult(res)) {
+        if (res.result == SEND_OK && res.prediction.valid) {
+            if (!plotterMode) {
+                Serial.printf("[RISK] %s (score=%.3f, confidence=%.3f)\n",
+                    res.prediction.riskLabel, res.prediction.riskScore, res.prediction.confidence);
             }
-            return;
-        }
-
-        if (result == SEND_JSON_ERROR || result == SEND_NOT_READY) {
-            return;
+            bleNotifyRisk(res.prediction.riskScore, res.prediction.riskLabel);
+        } else if (res.result != SEND_OK) {
+            Serial.printf("[SEND] Failed. Stats: %lu OK, %lu FAIL\n",
+                dataSenderGetSuccessCount(), dataSenderGetFailCount());
         }
     }
-
-    Serial.printf("[WINDOW] POST failed. Stats: %lu OK, %lu FAIL\n",
-        dataSenderGetSuccessCount(), dataSenderGetFailCount());
-#endif
 }
 
 // ============================================================
@@ -223,6 +216,7 @@ void setup() {
         }
         wifiInit();
         dataSenderInit();
+        dataSenderStartTask();
         Serial.println("[MAIN] Booting with stored WiFi credentials.");
     } else {
         // Use default credentials if defined (for testing)
@@ -235,6 +229,7 @@ void setup() {
         #endif
         wifiInit();
         dataSenderInit();
+        dataSenderStartTask();
     }
 #else
     wifiInit();
@@ -302,6 +297,7 @@ void loop() {
 
     // Handle completed 10s data window
     handleDataWindow();
+    checkSendResult();
 
     // BLE vitals notifications (every 1 second, only if client connected)
     if (bleIsClientConnected() && millis() - _lastBleNotify >= BLE_VITALS_NOTIFY_MS) {
