@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../models/user.dart';
+import '../config/theme.dart';
+import '../widgets/glass_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -84,16 +88,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await context.read<AuthProvider>().refreshUser();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile saved')),
+        SnackBar(
+          content: const Text('Profile saved'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF4CAF50),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Failed to save profile'),
           backgroundColor: Colors.red[700],
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
+  }
+
+  InputDecoration _fieldDecor(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: AppTheme.textSecondary),
+      prefixIcon: Icon(icon, size: 20, color: AppTheme.textSecondary),
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.04),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppTheme.accent, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
   }
 
   @override
@@ -101,126 +137,270 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profileProv = context.watch<ProfileProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Health Profile')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Basic info
-            _sectionTitle('Basic Information'),
-            const SizedBox(height: 12),
-            Row(
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppGradients.background),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ageC,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(hintText: 'Age'),
+                const Text(
+                  'Health Profile',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
+                ).animate().fadeIn(duration: 400.ms),
+                const SizedBox(height: 6),
+                const Text(
+                  'Your health data improves prediction accuracy',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'male', label: Text('Male')),
-                      ButtonSegment(value: 'female', label: Text('Female')),
+                const SizedBox(height: 24),
+
+                // Personal section
+                _sectionLabel('PERSONAL'),
+                const SizedBox(height: 10),
+                GlassCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _ageC,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(
+                                  color: AppTheme.textPrimary),
+                              decoration:
+                                  _fieldDecor('Age', Iconsax.calendar),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // Sex selector
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: Row(
+                          children: [
+                            _sexTab('Male', 'male'),
+                            _sexTab('Female', 'female'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _heightC,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(
+                                  color: AppTheme.textPrimary),
+                              decoration:
+                                  _fieldDecor('Height (cm)', Iconsax.ruler),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _weightC,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(
+                                  color: AppTheme.textPrimary),
+                              decoration:
+                                  _fieldDecor('Weight (kg)', Iconsax.weight),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
-                    selected: {_sex},
-                    onSelectionChanged: (s) =>
-                        setState(() => _sex = s.first),
                   ),
-                ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 100.ms)
+                    .slideY(begin: 0.1),
+
+                const SizedBox(height: 20),
+                _sectionLabel('MEDICAL HISTORY'),
+                const SizedBox(height: 10),
+                GlassCard(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  child: Column(
+                    children: [
+                      _toggle('Diabetic', Iconsax.health, _diabetic,
+                          (v) => setState(() => _diabetic = v)),
+                      _divider(),
+                      _toggle('Hypertensive', Iconsax.heart, _hypertensive,
+                          (v) => setState(() => _hypertensive = v)),
+                      _divider(),
+                      _toggle('Smoker', Iconsax.forbidden_2, _smoker,
+                          (v) => setState(() => _smoker = v)),
+                      _divider(),
+                      _toggle(
+                          'Family History',
+                          Iconsax.people,
+                          _familyHistory,
+                          (v) => setState(() => _familyHistory = v)),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 200.ms)
+                    .slideY(begin: 0.1),
+
+                const SizedBox(height: 20),
+                _sectionLabel('CONDITIONS & MEDICATIONS'),
+                const SizedBox(height: 10),
+                GlassCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _conditionsC,
+                        style:
+                            const TextStyle(color: AppTheme.textPrimary),
+                        decoration: _fieldDecor(
+                            'Known conditions (comma separated)',
+                            Iconsax.document_text),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _medicationsC,
+                        style:
+                            const TextStyle(color: AppTheme.textPrimary),
+                        decoration: _fieldDecor(
+                            'Medications (comma separated)',
+                            Iconsax.firstline),
+                        maxLines: 2,
+                      ),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 300.ms)
+                    .slideY(begin: 0.1),
+
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.primary,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: profileProv.saving ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: profileProv.saving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text(
+                              'Save Profile',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 400.ms)
+                    .slideY(begin: 0.1),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _heightC,
-                    keyboardType: TextInputType.number,
-                    decoration:
-                        const InputDecoration(hintText: 'Height (cm)'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _weightC,
-                    keyboardType: TextInputType.number,
-                    decoration:
-                        const InputDecoration(hintText: 'Weight (kg)'),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 28),
-            _sectionTitle('Medical History'),
-            const SizedBox(height: 12),
-            _toggle('Diabetic', _diabetic,
-                (v) => setState(() => _diabetic = v)),
-            _toggle('Hypertensive', _hypertensive,
-                (v) => setState(() => _hypertensive = v)),
-            _toggle(
-                'Smoker', _smoker, (v) => setState(() => _smoker = v)),
-            _toggle('Family History of Heart Disease', _familyHistory,
-                (v) => setState(() => _familyHistory = v)),
-
-            const SizedBox(height: 28),
-            _sectionTitle('Conditions & Medications'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _conditionsC,
-              decoration: const InputDecoration(
-                hintText: 'Known conditions (comma separated)',
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _medicationsC,
-              decoration: const InputDecoration(
-                hintText: 'Medications (comma separated)',
-              ),
-              maxLines: 2,
-            ),
-
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: profileProv.saving ? null : _save,
-              child: profileProv.saving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save Profile'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _sectionTitle(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF00BFA5),
-        ),
-      );
+  Widget _sectionLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.accent,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
 
-  Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _sexTab(String label, String value) {
+    final selected = _sex == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _sex = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: selected ? AppGradients.primary : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : AppTheme.textSecondary,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() {
+    return Divider(
+      height: 1,
+      color: Colors.white.withValues(alpha: 0.06),
+      indent: 16,
+      endIndent: 16,
+    );
+  }
+
+  Widget _toggle(
+      String label, IconData icon, bool value, ValueChanged<bool> onChanged) {
     return SwitchListTile(
-      title: Text(label, style: const TextStyle(fontSize: 14)),
+      title: Row(
+        children: [
+          Icon(icon, size: 18, color: AppTheme.textSecondary),
+          const SizedBox(width: 12),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14, color: AppTheme.textPrimary)),
+        ],
+      ),
       value: value,
       onChanged: onChanged,
-      contentPadding: EdgeInsets.zero,
-      activeThumbColor: const Color(0xFF00BFA5),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      activeThumbColor: AppTheme.accent,
     );
   }
 }
