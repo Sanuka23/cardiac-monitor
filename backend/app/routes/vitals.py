@@ -27,12 +27,25 @@ def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsRespons
     )
 
 
+async def _verify_device_ownership(device_id: str, user: dict):
+    """Verify the requesting user owns this device."""
+    if device_id not in user.get("device_ids", []):
+        raise HTTPException(
+            status_code=403, detail="Device not registered to your account"
+        )
+
+
 @router.post("", response_model=VitalsResponse)
 async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
     db = get_db()
 
+    # Resolve device → owner user_id
+    device_doc = await db.devices.find_one({"device_id": data.device_id})
+    user_id = device_doc.get("owner_user_id") if device_doc else None
+
     vitals_doc = {
         "device_id": data.device_id,
+        "user_id": user_id,
         "timestamp": datetime.utcfromtimestamp(data.timestamp),
         "window_ms": data.window_ms,
         "sample_rate_hz": data.sample_rate_hz,
@@ -62,20 +75,19 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
 
         if not data.ecg_lead_off and len(data.ecg_samples) >= 100:
             # Get user profile for personalized prediction
-            device_doc = await db.devices.find_one({"device_id": data.device_id})
             user_profile = None
             history_features = None
 
-            if device_doc and device_doc.get("owner_user_id"):
-                user = await db.users.find_one({"_id": ObjectId(device_doc["owner_user_id"])})
+            if device_doc and user_id:
+                user = await db.users.find_one({"_id": ObjectId(user_id)})
                 if user and user.get("profile"):
                     user_profile = user["profile"]
 
-                # Compute historical baselines
+                # Compute historical baselines (across all user's devices)
                 from datetime import timedelta
                 now = datetime.utcnow()
                 pipeline_24h = [
-                    {"$match": {"device_id": data.device_id,
+                    {"$match": {"user_id": user_id,
                                 "created_at": {"$gte": now - timedelta(hours=24)}}},
                     {"$group": {
                         "_id": None,
@@ -87,7 +99,7 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
                     }},
                 ]
                 pipeline_7d = [
-                    {"$match": {"device_id": data.device_id,
+                    {"$match": {"user_id": user_id,
                                 "created_at": {"$gte": now - timedelta(days=7)}}},
                     {"$group": {
                         "_id": None,
@@ -128,6 +140,7 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
                 pred_doc = {
                     "vitals_id": str(result.inserted_id),
                     "device_id": data.device_id,
+                    "user_id": user_id,
                     "risk_score": ml_result["risk_score"],
                     "risk_label": ml_result["risk_label"],
                     "confidence": ml_result["confidence"],
@@ -149,13 +162,74 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
     return _vitals_doc_to_response(vitals_doc, prediction)
 
 
+# ── User-based endpoints (must be before /{device_id} routes) ──
+
+
+@router.get("/me/latest", response_model=VitalsResponse)
+async def get_user_latest_vitals(
+    include_ecg: bool = Query(default=False),
+    user=Depends(get_current_user),
+):
+    db = get_db()
+    user_id = str(user["_id"])
+
+    projection = None if include_ecg else {"ecg_samples": 0, "beat_timestamps_ms": 0}
+    doc = await db.vitals.find_one(
+        {"user_id": user_id},
+        projection=projection,
+        sort=[("timestamp", -1)],
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="No vitals found")
+
+    pred = await db.predictions.find_one({"vitals_id": str(doc["_id"])})
+    pred_dict = None
+    if pred:
+        pred_dict = {
+            "risk_score": pred["risk_score"],
+            "risk_label": pred["risk_label"],
+            "confidence": pred["confidence"],
+        }
+
+    return _vitals_doc_to_response(doc, pred_dict)
+
+
+@router.get("/me/history", response_model=VitalsListResponse)
+async def get_user_vitals_history(
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    user=Depends(get_current_user),
+):
+    db = get_db()
+    user_id = str(user["_id"])
+
+    total = await db.vitals.count_documents({"user_id": user_id})
+    cursor = (
+        db.vitals.find(
+            {"user_id": user_id},
+            {"ecg_samples": 0},
+        )
+        .sort("timestamp", -1)
+        .skip(offset)
+        .limit(limit)
+    )
+    docs = await cursor.to_list(length=limit)
+
+    vitals_list = [_vitals_doc_to_response(doc) for doc in docs]
+    return VitalsListResponse(vitals=vitals_list, total=total)
+
+
+# ── Device-specific endpoints (with ownership verification) ──
+
+
 @router.get("/{device_id}/latest", response_model=VitalsResponse)
 async def get_latest_vitals(
     device_id: str,
     include_ecg: bool = Query(default=False),
-    _=Depends(get_current_user),
+    user=Depends(get_current_user),
 ):
     db = get_db()
+    await _verify_device_ownership(device_id, user)
 
     projection = None if include_ecg else {"ecg_samples": 0, "beat_timestamps_ms": 0}
     doc = await db.vitals.find_one(
@@ -186,9 +260,10 @@ async def get_vitals_history(
     device_id: str,
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
-    _=Depends(get_current_user),
+    user=Depends(get_current_user),
 ):
     db = get_db()
+    await _verify_device_ownership(device_id, user)
 
     total = await db.vitals.count_documents({"device_id": device_id})
     cursor = (
