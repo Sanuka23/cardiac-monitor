@@ -10,6 +10,8 @@ class Vitals {
   final int ecgSampleCount;
   final int beatCount;
   final DateTime timestamp;
+  final List<int>? ecgSamples;
+  final int? sampleRateHz;
 
   Vitals({
     this.id,
@@ -20,6 +22,8 @@ class Vitals {
     required this.ecgSampleCount,
     required this.beatCount,
     required this.timestamp,
+    this.ecgSamples,
+    this.sampleRateHz,
   });
 
   factory Vitals.fromJson(Map<String, dynamic> json) => Vitals(
@@ -28,8 +32,10 @@ class Vitals {
         heartRate: (json['heart_rate_bpm'] as num?)?.toDouble() ?? 0,
         spo2: json['spo2_percent'] ?? 0,
         ecgLeadOff: json['ecg_lead_off'] ?? false,
-        ecgSampleCount: json['ecg_sample_count'] ?? 0,
+        ecgSampleCount: json['sample_count'] ?? json['ecg_sample_count'] ?? 0,
         beatCount: json['beat_count'] ?? 0,
         timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
+        ecgSamples: (json['ecg_samples'] as List?)?.cast<int>(),
+        sampleRateHz: json['sample_rate_hz'],
       );
 }

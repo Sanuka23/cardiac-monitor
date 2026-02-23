@@ -23,6 +23,8 @@ class VitalsResponse(BaseModel):
     spo2_percent: int
     ecg_lead_off: bool
     sample_count: int
+    ecg_samples: Optional[List[int]] = None
+    sample_rate_hz: Optional[int] = None
     prediction: Optional[dict] = None
     created_at: datetime
 

@@ -11,6 +11,7 @@ router = APIRouter()
 
 
 def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsResponse:
+    ecg = doc.get("ecg_samples")
     return VitalsResponse(
         id=str(doc["_id"]),
         device_id=doc["device_id"],
@@ -18,7 +19,9 @@ def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsRespons
         heart_rate_bpm=doc["heart_rate_bpm"],
         spo2_percent=doc["spo2_percent"],
         ecg_lead_off=doc["ecg_lead_off"],
-        sample_count=len(doc.get("ecg_samples", [])),
+        sample_count=len(ecg) if ecg else 0,
+        ecg_samples=ecg,
+        sample_rate_hz=doc.get("sample_rate_hz"),
         prediction=prediction,
         created_at=doc["created_at"],
     )
@@ -147,11 +150,17 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
 
 
 @router.get("/{device_id}/latest", response_model=VitalsResponse)
-async def get_latest_vitals(device_id: str, _=Depends(get_current_user)):
+async def get_latest_vitals(
+    device_id: str,
+    include_ecg: bool = Query(default=False),
+    _=Depends(get_current_user),
+):
     db = get_db()
 
+    projection = None if include_ecg else {"ecg_samples": 0, "beat_timestamps_ms": 0}
     doc = await db.vitals.find_one(
         {"device_id": device_id},
+        projection=projection,
         sort=[("timestamp", -1)],
     )
     if not doc:

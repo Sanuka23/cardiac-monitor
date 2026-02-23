@@ -25,6 +25,6 @@ class Prediction {
         riskScore: (json['risk_score'] as num?)?.toDouble() ?? 0,
         riskLabel: json['risk_label'] ?? 'unknown',
         confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
-        timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
+        timestamp: DateTime.tryParse(json['created_at'] ?? json['timestamp'] ?? '') ?? DateTime.now(),
       );
 }

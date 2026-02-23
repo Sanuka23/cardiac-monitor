@@ -120,13 +120,27 @@ class ApiService {
     }
   }
 
+  /// Get the most recent vitals with ECG samples included.
+  Future<Vitals?> getLatestVitalsWithEcg(String deviceId) async {
+    try {
+      final resp = await _dio.get(
+        '$_baseUrl${ApiPaths.vitalsLatest(deviceId)}',
+        queryParameters: {'include_ecg': true},
+      );
+      return Vitals.fromJson(resp.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
   Future<List<Vitals>> getVitalsHistory(String deviceId,
-      {int limit = 100, int skip = 0}) async {
+      {int limit = 100, int offset = 0}) async {
     final resp = await _dio.get(
       '$_baseUrl${ApiPaths.vitals(deviceId)}',
-      queryParameters: {'limit': limit, 'skip': skip},
+      queryParameters: {'limit': limit, 'offset': offset},
     );
-    final list = resp.data as List;
+    final list = resp.data['vitals'] as List;
     return list.map((v) => Vitals.fromJson(v)).toList();
   }
 
@@ -143,12 +157,12 @@ class ApiService {
   }
 
   Future<List<Prediction>> getPredictionHistory(String deviceId,
-      {int limit = 100, int skip = 0}) async {
+      {int limit = 100, int offset = 0}) async {
     final resp = await _dio.get(
       '$_baseUrl${ApiPaths.predictions(deviceId)}',
-      queryParameters: {'limit': limit, 'skip': skip},
+      queryParameters: {'limit': limit, 'offset': offset},
     );
-    final list = resp.data as List;
+    final list = resp.data['predictions'] as List;
     return list.map((p) => Prediction.fromJson(p)).toList();
   }
 }
