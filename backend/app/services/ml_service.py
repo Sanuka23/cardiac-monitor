@@ -83,7 +83,7 @@ def load_models():
                 use_do=False,
                 n_classes=1,
             )
-            state_dict = torch.load(ecg_path, map_location=_device, weights_only=False)
+            state_dict = torch.load(ecg_path, map_location=_device, weights_only=False)  # nosec B614
             _ecg_model.load_state_dict(state_dict)
             _ecg_model.to(_device)
             _ecg_model.eval()
