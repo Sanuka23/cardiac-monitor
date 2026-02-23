@@ -14,8 +14,8 @@ class ApiService {
 
   ApiService(this._authStorage, this._settingsService) {
     _dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
     ));
     _dio.interceptors.add(_JwtInterceptor(_authStorage));
   }
