@@ -1,7 +1,7 @@
 import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 
-client: AsyncIOMotorClient = None
+client: AsyncIOMotorClient = None  # noqa: F824
 db = None
 
 

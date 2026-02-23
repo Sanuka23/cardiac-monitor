@@ -15,8 +15,8 @@ BACKEND_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 ML_SRC = os.path.join(BACKEND_ROOT, "ml_src")
 sys.path.insert(0, ML_SRC)
 
-from net1d import Net1D
-from feature_extractor import extract_ecg_features, features_to_array, FEATURE_NAMES
+from net1d import Net1D  # noqa: E402
+from feature_extractor import extract_ecg_features, features_to_array, FEATURE_NAMES  # noqa: E402
 
 # Model paths — bundled in backend/ml_models/
 MODEL_DIR = os.path.join(BACKEND_ROOT, "ml_models")

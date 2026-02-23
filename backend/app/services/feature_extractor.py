@@ -10,7 +10,7 @@ import sys
 ML_SRC = os.path.join(os.path.dirname(__file__), "..", "..", "ml_src")
 sys.path.insert(0, ML_SRC)
 
-from feature_extractor import (
+from feature_extractor import (  # noqa: E402
     extract_ecg_features,
     features_to_array,
     FEATURE_NAMES,

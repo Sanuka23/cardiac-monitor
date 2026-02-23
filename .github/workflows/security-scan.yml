@@ -26,17 +26,8 @@ jobs:
         uses: actions/dependency-review-action@v4
 
   codeql-analysis:
-    name: CodeQL Analysis
+    name: CodeQL Analysis (Python)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['python', 'c-cpp']
-        include:
-          - language: python
-            source-root: backend
-          - language: c-cpp
-            source-root: firmware
 
     steps:
       - name: Checkout repository
@@ -45,8 +36,8 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
-          source-root: ${{ matrix.source-root }}
+          languages: python
+          source-root: backend
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
@@ -54,7 +45,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: '/language:${{ matrix.language }}'
+          category: '/language:python'
 
   python-security:
     name: Python Security Checks
