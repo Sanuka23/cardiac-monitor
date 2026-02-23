@@ -142,7 +142,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           # Clone existing HF Space or initialize fresh repo
-          if git clone "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/sanuka0523/cardiac-monitor-api" hf-space --depth 1 2>/dev/null; then
+          if git clone "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/Sanuka0523/Cardiac_Monitor_API" hf-space --depth 1 2>/dev/null; then
             echo "Cloned existing HF Space"
           else
             echo "Initializing new HF Space repo"
@@ -163,8 +163,8 @@ jobs:
           git config user.email "actions@github.com"
 
           # Set remote with token auth
-          git remote set-url origin "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/sanuka0523/cardiac-monitor-api" 2>/dev/null || \
-            git remote add origin "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/sanuka0523/cardiac-monitor-api"
+          git remote set-url origin "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/Sanuka0523/Cardiac_Monitor_API" 2>/dev/null || \
+            git remote add origin "https://sanuka0523:${HF_TOKEN}@huggingface.co/spaces/Sanuka0523/Cardiac_Monitor_API"
 
           git add -A
           git diff --cached --quiet && echo "No changes to deploy" && exit 0
