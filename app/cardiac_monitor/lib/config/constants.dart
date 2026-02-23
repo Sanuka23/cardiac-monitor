@@ -59,6 +59,12 @@ class ApiPaths {
       '/api/v1/predictions/$deviceId/latest';
   static String predictions(String deviceId) =>
       '/api/v1/predictions/$deviceId';
+
+  // User-based endpoints (across all devices)
+  static const String myVitalsLatest = '/api/v1/vitals/me/latest';
+  static const String myVitalsHistory = '/api/v1/vitals/me/history';
+  static const String myPredictionsLatest = '/api/v1/predictions/me/latest';
+  static const String myPredictionsHistory = '/api/v1/predictions/me/history';
 }
 
 // Default API base URL
