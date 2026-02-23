@@ -1,3 +1,4 @@
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 
 client: AsyncIOMotorClient = None
@@ -6,7 +7,11 @@ db = None
 
 async def connect_db(uri: str, db_name: str):
     global client, db
-    client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
+    client = AsyncIOMotorClient(
+        uri,
+        serverSelectionTimeoutMS=5000,
+        tlsCAFile=certifi.where(),
+    )
     db = client[db_name]
 
     # Create indexes (non-blocking — if DB is unreachable, server still starts)
