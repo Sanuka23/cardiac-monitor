@@ -40,11 +40,12 @@
 // ============================================================
 //  ECG SAMPLING CONFIG
 // ============================================================
-#define ECG_SAMPLE_RATE_HZ      100
-#define ECG_SAMPLE_PERIOD_MS    (1000 / ECG_SAMPLE_RATE_HZ)     // 10ms
+#define ECG_SAMPLE_RATE_HZ      250
+#define ECG_SAMPLE_PERIOD_MS    (1000 / ECG_SAMPLE_RATE_HZ)     // 4ms
 #define ECG_WINDOW_MS           10000                            // 10 seconds
-#define ECG_SAMPLES_PER_WINDOW  (ECG_SAMPLE_RATE_HZ * ECG_WINDOW_MS / 1000)  // 1000
-#define ECG_TEXT_DIVISOR         10      // Text mode: print every 10th sample (10Hz)
+#define ECG_SAMPLES_PER_WINDOW  (ECG_SAMPLE_RATE_HZ * ECG_WINDOW_MS / 1000)  // 2500
+#define ECG_TEXT_DIVISOR         25      // Text mode: print every 25th sample (10Hz)
+#define ECG_OVERSAMPLE_COUNT    4       // Read ADC 4x and average per sample
 #define MAX_BEATS_PER_WINDOW    30      // Max ~180bpm for 10s
 
 // ============================================================
