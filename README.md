@@ -31,9 +31,9 @@ A full-stack IoT cardiac monitoring system that captures **real-time heart rate,
 ## Architecture
 
 ```
-┌─────────────────┐     BLE      ┌──────────────┐     HTTPS     ┌──────────────────┐
-│   ESP32 Device  │─────────────>│  Flutter App  │──────────────>│  FastAPI Backend  │
-│  MAX30100+AD8232│              │  (Provider)   │              │  (HF Spaces)     │
+┌─────────────────┐     BLE      ┌──────────────┐     HTTPS    ┌──────────────────┐
+│   ESP32 Device  │─────────────>│  Flutter App │─────────────>│  FastAPI Backend │
+│  MAX30100+AD8232│              │  (Provider)  │              │  (HF Spaces)     │
 └────────┬────────┘              └──────────────┘              └────────┬─────────┘
          │ WiFi                                                         │
          └─────────────────── POST /api/v1/vitals ─────────────────────>│
