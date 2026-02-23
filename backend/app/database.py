@@ -1,7 +1,7 @@
 import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 
-client: AsyncIOMotorClient = None  # noqa: F824
+client: AsyncIOMotorClient = None
 db = None
 
 
@@ -27,7 +27,6 @@ async def connect_db(uri: str, db_name: str):
 
 
 async def close_db():
-    global client
     if client:
         client.close()
 
