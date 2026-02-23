@@ -59,7 +59,7 @@ class ApiPaths {
 }
 
 // Default API base URL
-const String defaultApiBaseUrl = 'http://192.168.1.100:8000';
+const String defaultApiBaseUrl = 'https://sanuka0523-cardiac-monitor-api.hf.space';
 
 // Storage keys
 class StorageKeys {
