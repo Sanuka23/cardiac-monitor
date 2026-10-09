@@ -26,6 +26,7 @@ class VitalsResponse(BaseModel):
     ecg_samples: Optional[List[int]] = None
     sample_rate_hz: Optional[int] = None
     prediction: Optional[dict] = None
+    signal_quality: Optional[str] = None
     created_at: datetime
 
 
