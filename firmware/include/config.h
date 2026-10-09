@@ -3,6 +3,14 @@
 
 #include <Arduino.h>
 
+// WiFi fallback credentials + device API key. secrets.h is git-ignored;
+// builds without it (e.g. CI) use the placeholder template.
+#if __has_include("secrets.h")
+#include "secrets.h"
+#else
+#include "secrets.example.h"
+#endif
+
 // ============================================================
 //  BUILD MODE
 // ============================================================
@@ -51,9 +59,7 @@
 // ============================================================
 //  WIFI CONFIGURATION (Phase 4: credentials from NVS via BLE)
 // ============================================================
-// Fallback WiFi credentials for testing (used when NVS is empty)
-#define WIFI_DEFAULT_SSID       "Home Net "
-#define WIFI_DEFAULT_PASS       "0663661047"
+// Fallback WiFi credentials (WIFI_DEFAULT_SSID/PASS) are in secrets.h
 
 #define WIFI_CONNECT_TIMEOUT_MS 15000
 #define WIFI_RECONNECT_BASE_MS  1000
@@ -80,7 +86,7 @@
 // ============================================================
 #define API_BASE_URL            "https://sanuka0523-cardiac-monitor-api.hf.space"
 #define API_VITALS_PATH         "/api/v1/vitals"
-#define API_KEY                 "esp32-cardiac-device-key-2026"
+// API_KEY is in secrets.h
 #define API_TIMEOUT_MS          10000
 #define API_MAX_RETRIES         2
 

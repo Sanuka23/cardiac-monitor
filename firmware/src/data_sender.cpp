@@ -148,7 +148,8 @@ uint32_t dataSenderGetFailCount()    { return _failCount; }
 //  FreeRTOS Background Task
 // ============================================================
 static void dataSenderTaskFn(void* param) {
-    DataSendJob job;
+    // Static: keeps the ~5KB job off this task's stack, leaving room for TLS
+    static DataSendJob job;
     while (true) {
         if (xQueueReceive(_sendQueue, &job, portMAX_DELAY) == pdTRUE) {
             PredictionResult prediction;
@@ -188,7 +189,8 @@ void dataSenderStartTask() {
 
 bool dataSenderEnqueue(const SensorWindow& window, const char* deviceId, time_t timestamp) {
     if (!_sendQueue) return false;
-    DataSendJob job;
+    // Static: only called from loopTask, whose 8KB stack can't hold the ~5KB job
+    static DataSendJob job;
     job.window = window;
     strncpy(job.deviceId, deviceId, sizeof(job.deviceId) - 1);
     job.deviceId[sizeof(job.deviceId) - 1] = '\0';

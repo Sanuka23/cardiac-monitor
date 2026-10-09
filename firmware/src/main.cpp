@@ -132,7 +132,8 @@ static void printWifiStatus() {
 static void handleDataWindow() {
     if (!sensorIsWindowReady()) return;
 
-    SensorWindow window;
+    // Static: a 250Hz window is ~5KB and loopTask only has an 8KB stack
+    static SensorWindow window;
     if (!sensorGetWindow(window)) return;
 
     _bleEcgSentIndex = 0;  // Reset BLE ECG tracking for new window

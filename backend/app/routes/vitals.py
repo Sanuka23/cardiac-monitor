@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.middleware.auth import verify_api_key, get_current_user
 from app.models.vitals import VitalsCreate, VitalsResponse, VitalsListResponse
+from app.services.signal_quality import assess_ecg_quality
 
 router = APIRouter()
 
@@ -23,6 +24,7 @@ def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsRespons
         ecg_samples=ecg,
         sample_rate_hz=doc.get("sample_rate_hz"),
         prediction=prediction,
+        signal_quality=doc.get("signal_quality"),
         created_at=doc["created_at"],
     )
 
@@ -43,6 +45,19 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
     device_doc = await db.devices.find_one({"device_id": data.device_id})
     user_id = device_doc.get("owner_user_id") if device_doc else None
 
+    # Signal-quality gate: the lead-off pins miss unattached electrodes, so
+    # check the waveform itself before letting the model score it.
+    signal_quality = signal_quality_reason = None
+    if data.ecg_lead_off:
+        signal_quality = signal_quality_reason = "lead_off"
+    elif len(data.ecg_samples) >= 100:
+        try:
+            quality = assess_ecg_quality(data.ecg_samples, data.sample_rate_hz)
+            signal_quality, signal_quality_reason = quality["quality"], quality["reason"]
+        except Exception as e:
+            print(f"[SQ] Signal quality check error: {e}")
+            signal_quality, signal_quality_reason = "poor", "quality_check_error"
+
     vitals_doc = {
         "device_id": data.device_id,
         "user_id": user_id,
@@ -54,6 +69,8 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
         "ecg_lead_off": data.ecg_lead_off,
         "ecg_samples": data.ecg_samples,
         "beat_timestamps_ms": data.beat_timestamps_ms,
+        "signal_quality": signal_quality,
+        "signal_quality_reason": signal_quality_reason,
         "created_at": datetime.utcnow(),
     }
     result = await db.vitals.insert_one(vitals_doc)
@@ -73,7 +90,7 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
         if not _models_loaded:
             load_models()
 
-        if not data.ecg_lead_off and len(data.ecg_samples) >= 100:
+        if signal_quality == "good":
             # Get user profile for personalized prediction
             user_profile = None
             history_features = None
