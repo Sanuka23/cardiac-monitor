@@ -3,7 +3,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install CPU-only PyTorch first (saves ~1.5GB vs full torch)
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining dependencies
 COPY requirements.txt .
@@ -27,6 +27,9 @@ RUN MODEL_SIZE=$(wc -c < ml_models/ecgfounder_best.pt) && \
     else \
         echo "Model files are real (not LFS pointers) — no download needed"; \
     fi
+
+# Unbuffered stdout so print() logs reach the Space logs immediately (and survive a crash)
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 7860
 
