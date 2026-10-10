@@ -12,11 +12,12 @@ Usage (from backend/):
   API_KEY=... uv run --quiet --no-project --python 3.11 --with httpx \
       python scripts/replay_recording.py recording.raw --api http://localhost:7860 \
       --label "Recorded on this device · 2026-10-11 · healthy adult at rest" \
-      [--email demo@example.com --password ...] [--interval 10]
+      [--start-time 2026-10-11T01:50:38+05:30] [--email demo@example.com --password ...] [--interval 10]
 """
 
 import argparse
 import json
+from datetime import datetime
 import os
 import time
 from collections import Counter
@@ -59,12 +60,15 @@ def main():
     p.add_argument("--email", help="account to register the playback device to")
     p.add_argument("--password")
     p.add_argument("--interval", type=float, default=0, help="seconds between windows")
+    p.add_argument("--start-time", help="when the recording started (ISO 8601 with offset); windows are "
+                                        "timestamped start + 10 s each instead of the time they are sent")
     args = p.parse_args()
     if not args.api_key:
         p.error("--api-key or $API_KEY is required")
     if len(args.label) > 120:
         p.error("--label must be at most 120 characters")
 
+    start = int(datetime.fromisoformat(args.start_time).timestamp()) if args.start_time else None
     windows = firmware_windows(load_raw(args.recording))
     print(f"{len(windows)} windows of 10 s from {args.recording}")
 
@@ -79,7 +83,7 @@ def main():
                 time.sleep(args.interval)
             r = client.post("/api/v1/vitals", headers={"X-API-Key": args.api_key}, json={
                 "device_id": args.device_id,
-                "timestamp": int(time.time()),
+                "timestamp": start + n * 10 if start is not None else int(time.time()),
                 "window_ms": 10000,
                 "sample_rate_hz": SAMPLE_RATE_HZ,
                 "heart_rate_bpm": 0,
