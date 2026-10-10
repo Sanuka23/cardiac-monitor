@@ -36,6 +36,7 @@ from scipy.signal import resample_poly
 DEVICE_ID = "PLAYBACK_PTBXL"
 DEVICE_NAME = "PTB-XL playback (recorded clinical ECGs)"
 MI_CODES = {"IMI", "AMI", "ASMI", "ALMI", "ILMI", "LMI", "PMI", "IPLMI"}
+LABEL_TEXT = {"NORM": "normal ECG", "MI": "myocardial infarction"}
 COUNTS_PER_MV = 400.0
 CENTER = 2048
 SAMPLE_RATE_HZ = 250
@@ -131,6 +132,7 @@ def main():
                 "spo2_percent": 0,
                 "ecg_lead_off": False,
                 "ecg_samples": samples,
+                "source": f"PTB-XL #{row.ecg_id} · label: {LABEL_TEXT.get(row.label, row.label)}",
             })
             r.raise_for_status()
             body = r.json()
