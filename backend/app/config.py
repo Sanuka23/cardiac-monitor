@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRY_HOURS: int = 24
     API_KEY: str = "dev-api-key"
+    SHARED_DEVICE_IDS: str = ""  # comma-separated devices visible to every account
 
     class Config:
         env_file = ".env"

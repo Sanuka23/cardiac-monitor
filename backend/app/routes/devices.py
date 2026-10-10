@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.models.device import DeviceRegister, DeviceResponse
+from app.services.shared_devices import shared_device_ids
 
 router = APIRouter()
 
@@ -14,11 +15,19 @@ async def register_device(data: DeviceRegister, user=Depends(get_current_user)):
     db = get_db()
 
     existing = await db.devices.find_one({"device_id": data.device_id})
+    if data.device_id in shared_device_ids():
+        # Shared device: every account already sees it; never create or claim ownership
+        doc = existing or {}
+        return DeviceResponse(
+            device_id=data.device_id,
+            name=doc.get("name"),
+            owner_user_id=doc.get("owner_user_id"),
+            last_seen=doc.get("last_seen"),
+            registered_at=doc.get("registered_at", datetime.utcnow()),
+        )
     if existing:
         # If device already exists, link to this user if not already linked
-        if existing.get("owner_user_id") and str(existing["owner_user_id"]) != str(
-            user["_id"]
-        ):
+        if existing.get("owner_user_id") and str(existing["owner_user_id"]) != str(user["_id"]):
             raise HTTPException(
                 status_code=400, detail="Device already registered to another user"
             )

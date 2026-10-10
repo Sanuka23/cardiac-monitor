@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.middleware.auth import verify_api_key, get_current_user
 from app.models.vitals import VitalsCreate, VitalsResponse, VitalsListResponse
+from app.services.shared_devices import user_scope_filter
 from app.services.signal_quality import assess_ecg_quality
 
 router = APIRouter()
@@ -208,11 +209,10 @@ async def get_user_latest_vitals(
     user=Depends(get_current_user),
 ):
     db = get_db()
-    user_id = str(user["_id"])
 
     projection = None if include_ecg else {"ecg_samples": 0, "beat_timestamps_ms": 0}
     doc = await db.vitals.find_one(
-        {"user_id": user_id},
+        user_scope_filter(user),
         projection=projection,
         sort=[("timestamp", -1)],
     )
@@ -238,12 +238,12 @@ async def get_user_vitals_history(
     user=Depends(get_current_user),
 ):
     db = get_db()
-    user_id = str(user["_id"])
+    scope = user_scope_filter(user)
 
-    total = await db.vitals.count_documents({"user_id": user_id})
+    total = await db.vitals.count_documents(scope)
     cursor = (
         db.vitals.find(
-            {"user_id": user_id},
+            scope,
             {"ecg_samples": 0},
         )
         .sort("timestamp", -1)

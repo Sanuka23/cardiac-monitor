@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.models.prediction import PredictionResponse
+from app.services.shared_devices import user_scope_filter
 
 router = APIRouter()
 
@@ -35,10 +36,9 @@ async def _verify_device_ownership(device_id: str, user: dict):
 @router.get("/me/latest", response_model=PredictionResponse)
 async def get_user_latest_prediction(user=Depends(get_current_user)):
     db = get_db()
-    user_id = str(user["_id"])
 
     doc = await db.predictions.find_one(
-        {"user_id": user_id},
+        user_scope_filter(user),
         sort=[("created_at", -1)],
     )
     if not doc:
@@ -54,10 +54,10 @@ async def get_user_prediction_history(
     user=Depends(get_current_user),
 ):
     db = get_db()
-    user_id = str(user["_id"])
+    scope = user_scope_filter(user)
 
     cursor = (
-        db.predictions.find({"user_id": user_id})
+        db.predictions.find(scope)
         .sort("created_at", -1)
         .skip(offset)
         .limit(limit)
@@ -65,7 +65,7 @@ async def get_user_prediction_history(
     docs = await cursor.to_list(length=limit)
 
     results = [_pred_doc_to_response(doc) for doc in docs]
-    total = await db.predictions.count_documents({"user_id": user_id})
+    total = await db.predictions.count_documents(scope)
     return {"predictions": results, "total": total}
 
 
