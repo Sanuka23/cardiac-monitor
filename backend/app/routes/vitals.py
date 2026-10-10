@@ -11,6 +11,12 @@ from app.services.signal_quality import assess_ecg_quality
 router = APIRouter()
 
 
+def _ecg_heart_rate(features: dict):
+    """Heart rate the feature extractor measured from the ECG R-peaks, if plausible."""
+    hr = (features or {}).get("mean_hr_ecg")
+    return round(float(hr), 1) if hr and 30 <= hr <= 220 else None
+
+
 def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsResponse:
     ecg = doc.get("ecg_samples")
     return VitalsResponse(
@@ -18,6 +24,7 @@ def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsRespons
         device_id=doc["device_id"],
         timestamp=doc["timestamp"],
         heart_rate_bpm=doc["heart_rate_bpm"],
+        heart_rate_source=doc.get("heart_rate_source"),
         spo2_percent=doc["spo2_percent"],
         ecg_lead_off=doc["ecg_lead_off"],
         sample_count=len(ecg) if ecg else 0,
@@ -25,6 +32,7 @@ def _vitals_doc_to_response(doc: dict, prediction: dict = None) -> VitalsRespons
         sample_rate_hz=doc.get("sample_rate_hz"),
         prediction=prediction,
         signal_quality=doc.get("signal_quality"),
+        source=doc.get("source"),
         created_at=doc["created_at"],
     )
 
@@ -65,12 +73,14 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
         "window_ms": data.window_ms,
         "sample_rate_hz": data.sample_rate_hz,
         "heart_rate_bpm": data.heart_rate_bpm,
+        "heart_rate_source": "sensor" if data.heart_rate_bpm > 0 else None,
         "spo2_percent": data.spo2_percent,
         "ecg_lead_off": data.ecg_lead_off,
         "ecg_samples": data.ecg_samples,
         "beat_timestamps_ms": data.beat_timestamps_ms,
         "signal_quality": signal_quality,
         "signal_quality_reason": signal_quality_reason,
+        "source": data.source,
         "created_at": datetime.utcnow(),
     }
     result = await db.vitals.insert_one(vitals_doc)
@@ -152,6 +162,16 @@ async def upload_vitals(data: VitalsCreate, _=Depends(verify_api_key)):
                 user_profile=user_profile,
                 history_features=history_features,
             )
+
+            # No pulse sensor reading (e.g. MAX30100 disabled): use the HR measured from the ECG
+            if data.heart_rate_bpm <= 0:
+                ecg_hr = _ecg_heart_rate(ml_result.get("features"))
+                if ecg_hr:
+                    vitals_doc.update(heart_rate_bpm=ecg_hr, heart_rate_source="ecg")
+                    await db.vitals.update_one(
+                        {"_id": result.inserted_id},
+                        {"$set": {"heart_rate_bpm": ecg_hr, "heart_rate_source": "ecg"}},
+                    )
 
             if ml_result["risk_label"] != "unknown":
                 pred_doc = {

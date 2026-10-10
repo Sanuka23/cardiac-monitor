@@ -13,6 +13,7 @@ class VitalsCreate(BaseModel):
     ecg_lead_off: bool = Field(default=False)
     ecg_samples: List[int] = Field(..., min_length=100, max_length=6000)
     beat_timestamps_ms: List[int] = Field(default_factory=list)
+    source: Optional[str] = Field(None, max_length=120, description="Origin label for playback data")
 
 
 class VitalsResponse(BaseModel):
@@ -20,6 +21,7 @@ class VitalsResponse(BaseModel):
     device_id: str
     timestamp: datetime
     heart_rate_bpm: float
+    heart_rate_source: Optional[str] = None  # "sensor" (MAX30100) or "ecg" (derived from R-peaks)
     spo2_percent: int
     ecg_lead_off: bool
     sample_count: int
@@ -27,6 +29,7 @@ class VitalsResponse(BaseModel):
     sample_rate_hz: Optional[int] = None
     prediction: Optional[dict] = None
     signal_quality: Optional[str] = None
+    source: Optional[str] = None
     created_at: datetime
 
 
