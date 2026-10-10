@@ -5,13 +5,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.config import settings
-from app.database import connect_db, close_db
+from app.database import connect_db, close_db, get_db
+from app.services.shared_devices import ensure_shared_device_docs
 from app.routes import vitals, auth, devices, health, predictions
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_db(settings.MONGODB_URI, settings.DATABASE_NAME)
+
+    try:
+        await ensure_shared_device_docs(get_db())
+    except Exception as e:
+        print(f"[DB] Warning: Could not create shared device records: {e}")
 
     # Load ML models (non-blocking — server starts even if models aren't ready)
     try:

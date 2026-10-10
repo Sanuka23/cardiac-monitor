@@ -15,19 +15,19 @@ async def register_device(data: DeviceRegister, user=Depends(get_current_user)):
     db = get_db()
 
     existing = await db.devices.find_one({"device_id": data.device_id})
+    if data.device_id in shared_device_ids():
+        # Shared device: every account already sees it; never create or claim ownership
+        doc = existing or {}
+        return DeviceResponse(
+            device_id=data.device_id,
+            name=doc.get("name"),
+            owner_user_id=doc.get("owner_user_id"),
+            last_seen=doc.get("last_seen"),
+            registered_at=doc.get("registered_at", datetime.utcnow()),
+        )
     if existing:
-        owned_by_other = existing.get("owner_user_id") and str(existing["owner_user_id"]) != str(user["_id"])
-        if owned_by_other and data.device_id in shared_device_ids():
-            # Shared device: every account already sees it, keep the original owner
-            return DeviceResponse(
-                device_id=existing["device_id"],
-                name=existing.get("name"),
-                owner_user_id=existing.get("owner_user_id"),
-                last_seen=existing.get("last_seen"),
-                registered_at=existing.get("registered_at", datetime.utcnow()),
-            )
         # If device already exists, link to this user if not already linked
-        if owned_by_other:
+        if existing.get("owner_user_id") and str(existing["owner_user_id"]) != str(user["_id"]):
             raise HTTPException(
                 status_code=400, detail="Device already registered to another user"
             )
