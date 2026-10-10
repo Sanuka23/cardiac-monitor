@@ -39,6 +39,12 @@
 // ============================================================
 //  MAX30100 SENSOR CONFIG
 // ============================================================
+//   0 = MAX30100 not used: no I2C, HR/SpO2 sent as 0 and the server
+//       derives HR from the ECG. 1 = read HR/SpO2 from the MAX30100.
+#ifndef MAX30100_ENABLED
+#define MAX30100_ENABLED        0
+#endif
+
 #define MAX_INIT_RETRIES        5
 #define INIT_RETRY_DELAY_MS     1000
 #define IR_LED_CURRENT          MAX30100_LED_CURR_27_1MA
@@ -54,6 +60,8 @@
 #define ECG_SAMPLES_PER_WINDOW  (ECG_SAMPLE_RATE_HZ * ECG_WINDOW_MS / 1000)  // 2500
 #define ECG_TEXT_DIVISOR         25      // Text mode: print every 25th sample (10Hz)
 #define ECG_OVERSAMPLE_COUNT    4       // Read ADC 4x and average per sample
+#define ECG_OUTPUT_SCALE        0.5f    // Scale filtered ECG before re-centring at 2048 so
+                                        // R-peaks (AD8232 gain ~1100) stay below 4095
 #define MAX_BEATS_PER_WINDOW    30      // Max ~180bpm for 10s
 
 // ============================================================

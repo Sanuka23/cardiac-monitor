@@ -41,6 +41,7 @@ static bool    _windowReady = false;
 static uint8_t _ecgTextCounter = 0;
 static bool    _shouldPrintText = false;
 
+#if MAX30100_ENABLED
 // --- Beat callback (called by MAX30100 library) ---
 static void onBeatDetected() {
     _beatCountTotal++;
@@ -83,6 +84,7 @@ static bool initializeMax30100() {
     }
     return false;
 }
+#endif // MAX30100_ENABLED
 
 // --- Public: Initialize ---
 bool sensorInit() {
@@ -93,10 +95,15 @@ bool sensorInit() {
     analogSetPinAttenuation(PIN_ECG_OUTPUT, ADC_11db);
     analogReadResolution(12);
 
+#if MAX30100_ENABLED
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     Wire.setClock(100000);
 
     bool ok = initializeMax30100();
+#else
+    bool ok = true;
+    Serial.println("[SENSOR] MAX30100 disabled (MAX30100_ENABLED=0): HR derived from ECG by the server.");
+#endif
     if (ok) {
         _windowStartMs = millis();
         _ecgIndex = 0;
@@ -110,8 +117,10 @@ bool sensorInit() {
 
 // --- Public: Update (call from loop as fast as possible) ---
 void sensorUpdate() {
+#if MAX30100_ENABLED
     // CRITICAL: MAX30100 needs frequent polling
     pox.update();
+#endif
 
     uint32_t now = millis();
 
@@ -140,8 +149,8 @@ void sensorUpdate() {
             float smoothed = _ecgLpf.step(notched);
             float centered = _ecgDcRemover.step(smoothed);
 
-            // Re-center at 2048 (mid-range for 12-bit ADC) and clamp
-            _lastEcgValue = constrain((int)(centered + 2048.0f), 0, 4095);
+            // Scale, re-center at 2048 (mid-range for 12-bit ADC) and clamp
+            _lastEcgValue = constrain((int)(centered * ECG_OUTPUT_SCALE + 2048.0f), 0, 4095);
         }
 
         // Fill buffer if window is still collecting
@@ -171,6 +180,7 @@ void sensorUpdate() {
         }
     }
 
+#if MAX30100_ENABLED
     // --- Stall detection ---
     if (_beatCountTotal != _lastBeatCountForStall) {
         _lastBeatCountForStall = _beatCountTotal;
@@ -195,6 +205,7 @@ void sensorUpdate() {
         _lastSpO2 = pox.getSpO2();
         _tsLastReport = now;
     }
+#endif // MAX30100_ENABLED
 }
 
 // --- Public: Window ready check ---

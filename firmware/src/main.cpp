@@ -236,7 +236,11 @@ void setup() {
     wifiInit();
 #endif
 
+#if MAX30100_ENABLED
     Serial.println("\nPlace finger on MAX30100. Attach ECG electrodes.");
+#else
+    Serial.println("\nAttach ECG electrodes.");
+#endif
     Serial.println("Send 'p'=Plotter, 't'=Text, 'b'=BLE Provisioning");
     Serial.println("--------------------------------------------\n");
 }
