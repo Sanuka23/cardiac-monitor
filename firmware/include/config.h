@@ -67,7 +67,8 @@
 // ============================================================
 //  WIFI CONFIGURATION (Phase 4: credentials from NVS via BLE)
 // ============================================================
-// Fallback WiFi credentials (WIFI_DEFAULT_SSID/PASS) are in secrets.h
+// Optional fallback WiFi (WIFI_DEFAULT_SSID/PASS) can be set in secrets.h; without it
+// the board waits for WiFi provisioning from the app over BLE
 
 #define WIFI_CONNECT_TIMEOUT_MS 15000
 #define WIFI_RECONNECT_BASE_MS  1000
