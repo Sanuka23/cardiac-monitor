@@ -8,6 +8,7 @@ from jose import jwt, JWTError
 
 from app.config import settings
 from app.database import get_db
+from app.services.shared_devices import with_shared_devices
 
 security = HTTPBearer()
 
@@ -51,4 +52,6 @@ async def get_current_user(
     user = await db.users.find_one({"_id": ObjectId(user_id)})
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
+    # Shared devices count as every user's devices (lists and ownership checks)
+    user["device_ids"] = with_shared_devices(user.get("device_ids", []))
     return user
