@@ -254,8 +254,11 @@ All workflows run via [GitHub Actions](https://github.com/Sanuka23/cardiac-monit
 
 ## Documentation
 
+> **Start here:** [Complete Technical Guide](docs/PROJECT_GUIDE.md) — hardware, firmware, BLE protocol, API, ML, app, deployment, rebuild-from-scratch steps and known issues. It is the most up-to-date reference; the component READMEs below predate some October 2026 changes.
+
 | Document | Description |
 |----------|-------------|
+| [Complete Technical Guide](docs/PROJECT_GUIDE.md) | Full system reference and rebuild guide |
 | [App README](app/cardiac_monitor/README.md) | Flutter app architecture, BLE data format, build setup |
 | [Backend README](backend/README.md) | API endpoints, ML pipeline, Docker deployment |
 | [Firmware README](firmware/README.md) | ESP32 config, BLE services, sensor setup |
