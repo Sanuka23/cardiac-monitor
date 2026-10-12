@@ -341,12 +341,26 @@
     }
     for (const id of ids) sel.append(new Option(isPlayback(id) ? `${id} (recorded)` : id, id));
     const saved = store.get(DEVICE_KEY);
-    device = ids.includes(saved) ? saved : (ids.find((id) => !isPlayback(id)) || ids[0] || null);
+    device = ids.includes(saved) ? saved : await pickDefaultDevice(ids);
     if (device) sel.value = device;
 
     $("login").classList.add("hidden");
     $("app").classList.remove("hidden");
     startPolling();
+  }
+
+  // Prefer the live device that uploaded most recently: an account can also list unused IDs
+  // (e.g. a name typed into the app's "Device ID" field) that would open on an empty screen.
+  async function pickDefaultDevice(ids) {
+    const live = ids.filter((id) => !isPlayback(id));
+    const latest = await Promise.all(live.map(async (id) => {
+      try {
+        const r = await api(`/api/v1/vitals/${encodeURIComponent(id)}/latest`);
+        return [id, r.ok ? utc((await r.json()).created_at).getTime() : -1];
+      } catch { return [id, -1]; }
+    }));
+    latest.sort((a, b) => b[1] - a[1]);
+    return (latest.length && latest[0][1] >= 0 ? latest[0][0] : live[0]) || ids[0] || null;
   }
 
   $("device").addEventListener("change", (e) => {
