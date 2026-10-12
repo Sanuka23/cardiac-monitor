@@ -1,13 +1,16 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 from app.config import settings
 from app.database import connect_db, close_db, get_db
 from app.services.shared_devices import ensure_shared_device_docs
 from app.routes import vitals, auth, devices, health, predictions
+
+DASHBOARD_HTML = Path(__file__).parent / "static" / "dashboard.html"
 
 
 @asynccontextmanager
@@ -50,6 +53,12 @@ app.add_middleware(
 @app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/docs")
+
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard():
+    """Web dashboard: live ECG and risk assessment, using the JSON API with the user's login."""
+    return FileResponse(DASHBOARD_HTML, media_type="text/html")
 
 
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
