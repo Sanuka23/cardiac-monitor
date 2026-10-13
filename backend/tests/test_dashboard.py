@@ -15,7 +15,9 @@ def test_dashboard_is_served_as_html():
 
 def test_dashboard_uses_the_existing_api():
     html = client.get("/dashboard").text
-    for path in ("/api/v1/auth/login", "/api/v1/auth/me", "/api/v1/vitals/", "/api/v1/predictions/"):
+    paths = ("/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/me",
+             "/api/v1/vitals/", "/api/v1/predictions/")
+    for path in paths:
         assert path in html
 
 
