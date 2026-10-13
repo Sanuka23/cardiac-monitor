@@ -54,7 +54,8 @@ WiFi is configured **from the app over BLE**. The board boots into "provisioning
 |---|---|
 | MAX30100 pulse oximeter | **Disabled** (`MAX30100_ENABLED 0`). The module was unreliable (Section 15). HR and SpO2 from the device are sent as 0, and the server derives HR from the ECG. |
 | WiFi setup | BLE-first provisioning. No WiFi credentials are compiled into the firmware. |
-| Device visibility | The real device (`ESP32_21E5F0`) and a recorded session (`PLAYBACK_DEVICE_REC`) are **shared devices**, visible to every account (`SHARED_DEVICE_IDS`). |
+| Device visibility | Every real device that has sent data, plus the recorded session `PLAYBACK_DEVICE_REC`, is a **shared device**, visible to every account (`SHARED_DEVICE_IDS`, with `*`). A board does not need to be registered to an account. |
+| Web dashboard | `/dashboard` on the API: sign in or register, then see the live ECG, heart rate and risk assessment of any shared device (Section 8.9). |
 | Demo data | Recorded clinical ECGs (PTB-XL) and a 5-minute real recording from this device can be **replayed** through the API. They are always labelled as playback and never presented as live data. |
 
 ---
@@ -67,6 +68,7 @@ WiFi is configured **from the app over BLE**. The board boots into "provisioning
 | Releases (APK + firmware .bin) | https://github.com/Sanuka23/cardiac-monitor/releases/latest |
 | CI runs | https://github.com/Sanuka23/cardiac-monitor/actions |
 | Live API base URL | https://sanuka0523-cardiac-monitor-api.hf.space |
+| Web dashboard (live ECG and risk) | https://sanuka0523-cardiac-monitor-api.hf.space/dashboard |
 | Swagger UI (interactive API docs) | https://sanuka0523-cardiac-monitor-api.hf.space/docs |
 | ReDoc | https://sanuka0523-cardiac-monitor-api.hf.space/redoc |
 | OpenAPI JSON | https://sanuka0523-cardiac-monitor-api.hf.space/openapi.json |
@@ -668,7 +670,7 @@ Source layout (`backend/app/`):
 | `JWT_ALGORITHM` | `HS256` | no | |
 | `JWT_EXPIRY_HOURS` | `24` | no | Token lifetime |
 | `API_KEY` | `dev-api-key` | **yes** (secret) | Device upload key. Must match the firmware's `secrets.h`. |
-| `SHARED_DEVICE_IDS` | `""` | no (Space *variable*) | Comma-separated device IDs visible to every account. Live value: `ESP32_21E5F0,PLAYBACK_DEVICE_REC`. |
+| `SHARED_DEVICE_IDS` | `""` | no (Space *variable*) | Comma-separated device IDs visible to every account; `*` adds every non-playback device that has sent data. Live value: `ESP32_21E5F0,PLAYBACK_DEVICE_REC,*`. |
 
 Locally these are read from `backend/.env`. The `.env` file is resolved relative to the working directory, so run the server from `backend/`. A template is in `backend/.env.example`. On Hugging Face, set them as Space **secrets** (the first three) and **variables** (the rest).
 
@@ -696,6 +698,7 @@ All paths are prefixed with `https://sanuka0523-cardiac-monitor-api.hf.space`. T
 | Method | Path | Auth | Request | Response / behaviour |
 |---|---|---|---|---|
 | GET | `/` | – | – | 307 redirect to `/docs` |
+| GET | `/dashboard` | – (page signs in with JWT) | – | Web dashboard HTML (`app/static/dashboard.html`). Not in the OpenAPI schema. |
 | GET | `/api/v1/health` | – | – | `{"status":"ok","db":"connected"\|"disconnected","version":"1.0.0"}`. Always 200. |
 | POST | `/api/v1/auth/register` | – | `{email (5–100), password (6–100), name (1–100)}` | `{access_token, token_type}`. 400 "Email already registered". |
 | POST | `/api/v1/auth/login` | – | JSON `{email, password}` (not form data) | `{access_token, token_type}`. 401 "Invalid email or password". |
@@ -806,6 +809,15 @@ The gate was built to stop the model from scoring noise. Unattached electrodes p
 - Registering a shared device is read-only: it never creates or claims ownership.
 - At startup an unowned record is upserted for each shared ID, so `last_seen` updates.
 - Unset `SHARED_DEVICE_IDS` (or leave it empty) for the original per-user behaviour.
+
+**`*` (all devices).** The entry `*` also shares every device that has uploaded at least one window (`db.vitals.distinct("device_id")`, which uses the `device_id` index). A new board therefore appears for every account as soon as it sends data; nobody has to register it.
+
+- Devices whose ID starts with `PLAYBACK_` are excluded from `*`. They hold recorded or dataset ECG, so they are shared only when listed by name (as `PLAYBACK_DEVICE_REC` is).
+- With `*`, the `/me/...` filter uses the account's full visible device list: `{$or: [{user_id: me}, {device_id: {$in: visible}}]}`.
+- Device order in `/auth/me`: the account's own devices, then named shared devices, then the other uploading devices (A–Z). The app shows the first one; the web dashboard opens on whichever uploaded most recently.
+- Privacy: every account can read every shared device's ECG. That suits a single demo prototype. Remove `*` before real patients use the system.
+
+**Web dashboard (`/dashboard`).** A single HTML file served by the API (`app/static/dashboard.html`), styled like the app. Users sign in or register on the Login / Register tabs, and the page calls the JSON API with their JWT. It polls every 5 s: `GET /api/v1/vitals/{id}/latest?include_ecg=true` and `GET /api/v1/predictions/{id}?limit=30`. It shows the ECG window, ECG-derived heart rate, the risk assessment, a 30-point risk trend and device status. Playback devices are labelled **RECORDED · NOT LIVE**. `?api=<base URL>` points the page at another API.
 
 ### 8.10 Scripts (`backend/scripts/`)
 
@@ -1286,7 +1298,7 @@ In the app, go to **Connect Device**, then:
 4. Wait for "Device ready!".
 5. Type the device ID from Step 7 and tap **Register & Continue**.
 
-To share the board with every account instead, put its ID in `SHARED_DEVICE_IDS`; registration is then optional.
+To share the board with every account instead, put its ID (or `*`) in `SHARED_DEVICE_IDS`; registration is then optional.
 
 ✅ Serial shows `[WIFI] State: READY`, then `[SEND] HTTP 200` every 10 s.
 ✅ With electrodes on, the server returns predictions, and the app shows the risk label and the live ECG.

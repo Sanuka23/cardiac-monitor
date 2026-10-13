@@ -47,6 +47,10 @@
     box-shadow: 0 6px 16px rgba(13,148,136,.35); }
   .btn-primary:disabled { opacity: .6; cursor: progress; }
   .error { color: var(--high); font-size: 13px; min-height: 18px; margin: 4px 0 10px; }
+  .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface); margin-bottom: 20px; }
+  .tabs button { flex: 1; border: 0; padding: 10px 0; border-radius: 10px; background: none; color: var(--text2);
+    font-size: 14px; font-weight: 600; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: #fff; background: linear-gradient(90deg, #0D9488, #06B6D4); }
 
   /* ── Layout ── */
   .wrap { max-width: 1120px; margin: 0 auto; padding: 16px 16px 32px; }
@@ -138,9 +142,14 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>
     </div>
     <h1>Cardiac Monitor</h1>
-    <p>Sign in with your app account to view the live dashboard.</p>
-    <label class="field"><span>Email</span><input id="email" type="email" required autocomplete="username"></label>
-    <label class="field"><span>Password</span><input id="password" type="password" required minlength="6" autocomplete="current-password"></label>
+    <p>Real-time heart health monitoring</p>
+    <div class="tabs" role="tablist">
+      <button id="tab-login" type="button" role="tab" aria-selected="true">Login</button>
+      <button id="tab-register" type="button" role="tab" aria-selected="false">Register</button>
+    </div>
+    <label id="name-field" class="field hidden"><span>Full name</span><input id="name" type="text" maxlength="100" autocomplete="name"></label>
+    <label class="field"><span>Email</span><input id="email" type="email" required minlength="5" maxlength="100" autocomplete="username"></label>
+    <label class="field"><span>Password</span><input id="password" type="password" required minlength="6" maxlength="100" autocomplete="current-password"></label>
     <div id="login-error" class="error" role="alert"></div>
     <button id="login-btn" class="btn-primary" type="submit">Sign In</button>
   </form>
@@ -305,19 +314,41 @@
     showLogin(message);
   }
 
+  // Login / Register toggle, as in the app's login screen
+  let registering = false;
+  function setMode(register) {
+    registering = register;
+    $("tab-login").setAttribute("aria-selected", String(!register));
+    $("tab-register").setAttribute("aria-selected", String(register));
+    $("name-field").classList.toggle("hidden", !register);
+    $("name").required = register;
+    $("password").autocomplete = register ? "new-password" : "current-password";
+    $("login-btn").textContent = register ? "Create Account" : "Sign In";
+    $("login-error").textContent = "";
+  }
+  $("tab-login").addEventListener("click", () => setMode(false));
+  $("tab-register").addEventListener("click", () => setMode(true));
+
   $("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = $("login-btn");
     btn.disabled = true; $("login-error").textContent = "";
     try {
-      const res = await timedFetch(API + "/api/v1/auth/login", {
+      const creds = { email: $("email").value.trim(), password: $("password").value };
+      if (registering) creds.name = $("name").value.trim();
+      if (registering && !creds.name) throw new Error("Name required");
+      const res = await timedFetch(API + (registering ? "/api/v1/auth/register" : "/api/v1/auth/login"), {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: $("email").value.trim(), password: $("password").value }),
+        body: JSON.stringify(creds),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Sign-in failed");
+      if (!res.ok) {
+        if (typeof body.detail === "string") throw new Error(body.detail);
+        throw new Error(registering ? "Please check your name, email and password." : "Sign-in failed");
+      }
       token = body.access_token; store.set(TOKEN_KEY, token);
-      $("password").value = "";
+      $("password").value = ""; $("name").value = "";
+      setMode(false);
       await start();
     } catch (err) {
       $("login-error").textContent = err.message;
